@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charSet="utf-8" />
+<title>MusicGamez: {% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.1.7/css/fork-awesome.min.css" integrity="sha256-gsmEoJAws/Kd3CjuOQzLie5Q3yshhvmo7YNtBG7aaEY=" crossorigin="anonymous">
+</head>
+<body>
+<nav>
+<h1><a href="{{ url_for('main.index') }}">MusicGamez</a></h1>
+<ul class="fa-ul">
+<li><i class="fa-li fa fa-book" aria-hidden="true"></i>Browse
+<ul>
+<li><a href="/browse/artist">Artist</a></li>
+<li><a href="/browse/label">Label</a></li>
+<li><a href="/browse/genre">Genre</a></li>
+</ul>
+</li>
+<li><i class="fa-li fa fa-wrench" aria-hidden="true"></i>Tools
+<ul>
+<li><a href="/collection">My Collection</a></li>
+</ul>
+</li>
+<li><a href="/about"><i class="fa-li fa fa-info-circle" aria-hidden="true"></i>About/Help</a></li>
+</ul>
+</nav>
+<div>
+{% for message in get_flashed_messages() %}
+<div class="flash">{{ message }}</div>
+{% endfor %}
+</div>
+<main>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>
+

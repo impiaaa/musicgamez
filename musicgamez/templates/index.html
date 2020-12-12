@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<ul>
+{% for site in sites %}
+<li><a href="{{ site.url_base }}">{{ site.name }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}
+
