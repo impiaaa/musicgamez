@@ -2,8 +2,12 @@
 {% block title %}Home{% endblock %}
 {% block content %}
 <ul>
-{% for site in sites %}
-<li><a href="{{ site.url_base }}">{{ site.name }}</a></li>
+{% for beatmap in maps %}
+<li><a href="https://musicbrainz.org/recording/{{ beatmap.recording.gid }}">{{ beatmap.recording.name }}</a>
+by
+{% for artist in beatmap.recording.artist_credit.artists %}<a href="https://musicbrainz.org/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}
+mapped by
+<a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}">{{ beatmap.choreographer }}</a></li>
 {% endfor %}
 </ul>
 {% endblock %}
