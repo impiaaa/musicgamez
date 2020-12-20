@@ -24,6 +24,7 @@ def insert_basic(target, connection, **kw):
 
 class Beatmap(db.Model):
     class State(Enum):
+        ERROR = -1
         INITIAL = 0
         MATCHED_WITH_STRING = 1
         WAITING_FOR_FINGERPRINT = 2
