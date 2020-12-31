@@ -1,7 +1,7 @@
 from musicgamez import db
 from mbdata.models import Recording
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql.expression import text
+from sqlalchemy.sql import func
 from sqlalchemy import event
 from enum import Enum
 
@@ -40,18 +40,18 @@ class Beatmap(db.Model):
     
     external_id = db.Column(db.String(255))
     external_site_id = db.Column(db.Integer, db.ForeignKey(BeatSite.id), nullable=False)
-    external_site = db.relationship(BeatSite)
+    external_site = db.relationship(BeatSite, innerjoin=True, lazy='joined')
     i = db.Index('external_ref', external_id, external_site_id, unique=True)
     choreographer = db.Column(db.String)
     date = db.Column(db.DateTime)
     
     state = db.Column(db.Enum(State), default=State.INITIAL)
-    last_checked = db.Column(db.DateTime, server_default=text('NOW()'))
+    last_checked = db.Column(db.DateTime, server_default=func.now())
     duration = db.Column(db.Float)
     fingerprint = db.Column(db.String)
     track_id = db.Column(UUID)
     recording_gid = db.Column(UUID, db.ForeignKey(Recording.gid))
-    recording = db.relationship(Recording)
+    recording = db.relationship(Recording, backref='beatmaps')
     
     def validate_state(self):
         if self.state == self.State.INITIAL:
@@ -68,12 +68,10 @@ class Beatmap(db.Model):
             assert self.duration is None
             assert self.fingerprint is None
             assert self.track_id is None
-            assert self.recording is None
         elif self.state == self.State.HAS_FINGERPRINT:
             assert self.duration is not None
             assert self.fingerprint is not None
             assert self.track_id is None
-            assert self.recording is None
         elif self.state == self.State.MATCHED_WITH_FINGERPRINT:
             assert self.duration is not None
             assert self.fingerprint is not None
@@ -83,7 +81,6 @@ class Beatmap(db.Model):
             assert self.duration is not None
             assert self.fingerprint is not None
             assert self.track_id is not None
-            assert self.recording is None
         else:
             assert False
 

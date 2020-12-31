@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<ul>
-{% for beatmap in maps %}
-<li><a href="https://musicbrainz.org/recording/{{ beatmap.recording.gid }}">{{ beatmap.recording.name }}</a>
-by
-{% for artist in beatmap.recording.artist_credit.artists %}<a href="https://musicbrainz.org/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}
-mapped by
-<a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}">{{ beatmap.choreographer }}</a></li>
+<ul class="recordinglist">
+{% for recording, release, coverart in recordings %}
+<li {% if coverart %}style="background-image:linear-gradient(rgba(0,0,0,.5),transparent,rgba(0,0,0,.5)),url(//coverartarchive.org/release/{{ release.gid }}/{{ coverart.id }}-250.jpg)"{% endif %}><h3><a href="https://musicbrainz.org/recording/{{ recording.gid }}">{{ recording.name }}</a></h3>
+<h4>{% for artist in recording.artist_credit.artists %}<a href="https://musicbrainz.org/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
+<ul class="bmlist">
+{% for beatmap in recording.beatmaps %}
+<li><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}" title="Mapped for {{ beatmap.external_site.name }} by {{ beatmap.choreographer }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.jpg') }}" /></a></li>
+{% endfor %}
+</ul>
+</li>
 {% endfor %}
 </ul>
 {% endblock %}

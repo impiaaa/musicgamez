@@ -137,7 +137,7 @@ from zipfile import ZipFile
 from tempfile import TemporaryFile, NamedTemporaryFile
 from acoustid import fingerprint_file, lookup, WebServiceError
 
-@scheduler.task('interval', id='generate_fingerprint', minutes=1)
+@scheduler.task('interval', id='generate_fingerprint', minutes=3)
 def generate_fingerprint():
     with db.app.app_context():
         session = db.create_scoped_session()
