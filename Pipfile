@@ -11,6 +11,7 @@ psycopg2 = "*"
 Flask-APScheduler = "*"
 Flask-SQLAlchemy = "*"
 pyacoustid = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 

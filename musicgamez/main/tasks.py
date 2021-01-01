@@ -99,9 +99,57 @@ def fetch_osu():
         db.app.logger.info("Imported {} beatmaps for {}".format(imported, site.name))
         session.remove()
 
+import csv, codecs
+from mbdata.models import Artist, Label
+def import_partybus_stream_permission():
+    """Import artist streaming permissions from Partybus's spreadsheet"""
+    with urlopen_with_ua("https://docs.google.com/spreadsheets/d/1QjLWvGHCslmupJKRn5JWnymK4Hxtq_O71JYXGw4yq5g/export?format=csv") as csvfile:
+        reader = csv.reader(codecs.iterdecode(csvfile, 'utf-8'))
+        for row in reader:
+            if len(row) > 0 and row[0] == "Name":
+                break
+        for row in reader:
+            name, genre, type, whereToAcquire, platform, permission, screenshot = row
+            try:
+                if type == "Artist":
+                    a = db.session.query(Artist).filter(Artist.name==name).one()
+                    db.session.add(ArtistStreamPermission(artist=a, url=permission, source="Partybus"))
+                elif type == "Label/Group":
+                    l = db.session.query(Label).filter(Label.name==name).one()
+                    db.session.add(LabelStreamPermission(label=l, url=permission, source="Partybus"))
+            except sqlalchemy.orm.exc.NoResultFound as e:
+                db.app.logger.error("Can't find %s %r: %s"%(type, name, e))
+                pass
+            except sqlalchemy.orm.exc.MultipleResultsFound as e:
+                db.app.logger.error("Can't find %s %r: %s"%(type, name, e))
+                pass
+        db.session.commit()
+
+from bs4 import BeautifulSoup
+def import_creatorhype_stream_permission():
+    """Import artist streaming permissions from creatorhype.com's spreadsheet"""
+    for row in json.load(urlopen_with_ua("https://creatorhype.com/wp-admin/admin-ajax.php?action=wp_ajax_ninja_tables_public_action&table_id=3665&target_action=get-all-data&default_sorting=old_first")):
+        soup = BeautifulSoup(row["value"]["proof_of_permission"], "html.parser")
+        if not soup or not soup.a or not soup.a['href']:
+            continue
+        name = row["value"]["source"]
+        url = soup.a['href']
+        try:
+            a = db.session.query(Artist).filter(Artist.name==name).one()
+        except sqlalchemy.orm.exc.NoResultFound as e:
+            db.app.logger.error("Can't find artist %r: %s"%(name, e))
+            continue
+        except sqlalchemy.orm.exc.MultipleResultsFound as e:
+            db.app.logger.error("Can't find artist %r: %s"%(name, e))
+            continue
+        if db.session.query(ArtistStreamPermission).filter(ArtistStreamPermission.artist_gid==a.gid).count() > 0:
+            continue
+        db.session.add(ArtistStreamPermission(artist=a, url=url, source="Creator Hype"))
+    db.session.commit()
+
 from datetime import datetime
 from sqlalchemy.sql import func
-from mbdata.models import Artist, ArtistCredit, Recording
+from mbdata.models import ArtistCredit, Recording
 
 def match_with_string():
     with db.app.app_context():

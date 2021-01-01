@@ -15,5 +15,5 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def index():
-    return render_template("index.html", recordings=db.session.query(MiniRecordingView).limit(100))
+    return render_template("index.html", recordings=db.session.query(MiniRecordingView))
 

@@ -88,6 +88,8 @@ def create_app(test_config=None):
         from musicgamez.main import tasks
 
     app.cli.add_command(init_db_command)
+    app.cli.add_command(import_partybus_stream_permission)
+    app.cli.add_command(import_creatorhype_stream_permission)
     app.cli.add_command(fetch_beatsaber_command)
     app.cli.add_command(fetch_osu_command)
 
@@ -104,6 +106,20 @@ def init_db_command():
     init_db()
     click.echo("Initialized the database.")
 
+@click.command("import-partybus-stream-permission")
+@with_appcontext
+def import_partybus_stream_permission():
+    """Import artist streaming permissions from Partybus's spreadsheet"""
+    from musicgamez.main.tasks import import_partybus_stream_permission
+    import_partybus_stream_permission()
+
+@click.command("import-creatorhype-stream-permission")
+@with_appcontext
+def import_creatorhype_stream_permission():
+    """Import artist streaming permissions from creatorhype.com's spreadsheet"""
+    from musicgamez.main.tasks import import_creatorhype_stream_permission
+    import_creatorhype_stream_permission()
+
 @click.command("fetch-beatsaber")
 @with_appcontext
 def fetch_beatsaber_command():
@@ -119,6 +135,7 @@ def fetch_beatsaber_command():
 @with_appcontext
 def fetch_osu_command():
     """Manually import maps from osu!."""
+    scheduler.shutdown()
     from musicgamez.main.tasks import fetch_osu, match_with_string
     fetch_osu()
     try: scheduler.shutdown()

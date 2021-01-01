@@ -6,6 +6,9 @@
 <li {% if recording.cover_id %}style="background-image:linear-gradient(rgba(0,0,0,.5),transparent,rgba(0,0,0,.5)),url(//coverartarchive.org/release/{{ recording.cover_id }}-250.jpg)"{% endif %}
 ><div><div class="titlerow"><h3><a href="https://musicbrainz.org/recording/{{ recording.gid }}">{{ recording.name }}</a></h3>
 <div class="licenselist">
+{% if recording.permission_url %}
+<a href="{{ recording.permission_url }}" title="Artist or label has given permission for streaming (click for conditions)"><i class="fa fa-television" aria-hidden="true"></i></a>
+{% endif %}
 {% if recording.license_url and recording.license_url.startswith("https://creativecommons.org/licenses/") %}
 <a href="{{ recording.license_url }}" title="Licensed under Creative Commons (click for terms)"><i class="fa fa-creative-commons" aria-hidden="true"></i></a>
 {% endif %}

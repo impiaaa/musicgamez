@@ -86,6 +86,20 @@ class Beatmap(db.Model):
         else:
             assert False
 
+class ArtistStreamPermission(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    artist_gid = db.Column(UUID, db.ForeignKey(Artist.gid), unique=True)
+    artist = db.relationship(Artist, backref='stream_permission')
+    url = db.Column(db.String)
+    source = db.Column(db.String)
+
+class LabelStreamPermission(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label_gid = db.Column(UUID, db.ForeignKey(Label.gid), unique=True)
+    label = db.relationship(Label, backref='stream_permission')
+    url = db.Column(db.String)
+    source = db.Column(db.String)
+
 class MiniRecordingView(db.Model):
     __table__ = view("mini_recording_view", db.metadata,
         select([Recording.id.label("id"),
@@ -114,6 +128,25 @@ class MiniRecordingView(db.Model):
                     )\
                     .limit(1)\
                     .label("license_url"),
+                select([ArtistStreamPermission.url])\
+                    .select_from(\
+                        ArtistStreamPermission.__table__.join(Artist)\
+                        .join(ArtistCreditName)\
+                        .join(ArtistCredit)
+                    )\
+                    .where(ArtistCredit.id==Recording.artist_credit_id)\
+                    .union(select([LabelStreamPermission.url])\
+                        .select_from(\
+                            LabelStreamPermission.__table__.join(Label)
+                            .join(ReleaseLabel)\
+                            .join(Release)\
+                            .join(Medium)\
+                            .join(Track)\
+                        )\
+                        .where(Track.recording_id==Recording.id)
+                    )\
+                    .limit(1)\
+                    .label("permission_url"),
                 select([Release.gid.concat('/').concat(CoverArt.id)])\
                     .select_from(\
                         Release.__table__.join(CoverArt)\
