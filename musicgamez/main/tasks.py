@@ -5,8 +5,11 @@ import sqlalchemy, json
 
 USER_AGENT = "musicgamez/0.0"
 
-def urlopen_with_ua(u):
-    return urlopen(Request(u, headers={"User-Agent": USER_AGENT}))
+def urlopen_with_ua(u, **kwargs):
+    headers = {"User-Agent": USER_AGENT}
+    if "headers" in kwargs:
+        headers.update(kwargs.pop("headers"))
+    return urlopen(Request(u, headers=headers, **kwargs))
 
 @scheduler.task('interval', id='fetch_beatsaber', hours=1, jitter=60)
 def fetch_beatsaber():
@@ -65,10 +68,11 @@ def fetch_osu():
         
         site = session.query(BeatSite).filter(BeatSite.short_name=='osu').one()
         
+        token = json.load(urlopen_with_ua("https://osu.ppy.sh/oauth/token", data=urlencode({"client_id": db.app.config["OSU_CLIENT_ID"], "client_secret": db.app.config["OSU_CLIENT_SECRET"], "grant_type": "client_credentials", "scope": "public"}).encode()))["access_token"]
+        
         cursor = {}
         for page in range(1):
-            # TODO: unofficial endpoint, only returns raned mapsets
-            response = json.load(urlopen_with_ua("https://osu.ppy.sh/beatmapsets/search?"+urlencode(cursor)))
+            response = json.load(urlopen_with_ua("https://osu.ppy.sh/api/v2/beatmapsets/search?sort=updated_desc&s=any&"+urlencode(cursor), headers={"Authorization": "Bearer {}".format(token)}))
             cursor = {"cursor[{}]".format(k): v for k, v in response['cursor'].items()}
             
             lastPage = False
@@ -189,7 +193,7 @@ from acoustid import fingerprint_file, lookup, WebServiceError
 def generate_fingerprint():
     with db.app.app_context():
         session = db.create_scoped_session()
-        # TODO support osu!
+        # TODO support osu! (download requires user grant)
         bm = session.query(Beatmap)\
              .filter(Beatmap.state == Beatmap.State.WAITING_FOR_FINGERPRINT)\
              .filter(Beatmap.external_site.has(BeatSite.short_name == 'bs'))\
@@ -212,7 +216,8 @@ def generate_fingerprint():
         try:
             if bm.external_site.short_name == 'bs':
                 dl_url = "https://beatsaver.com/api/download/key/"+bm.external_id
-            #elif bm.external_site.short_name == 'osu':
+            elif bm.external_site.short_name == 'osu':
+                dl_url = "https://osu.ppy.sh/api/v2/beatmapsets/"+bm.external_id+"/download"
             else:
                 assert False
             url_file = urlopen_with_ua(dl_url)
