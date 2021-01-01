@@ -1,8 +1,10 @@
 from musicgamez import db
-from mbdata.models import Recording
+from musicgamez.views import view
+from mbdata.models import *
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-from sqlalchemy import event
+from sqlalchemy import event, select
+from sqlalchemy.sql.expression import subquery
 from enum import Enum
 
 class BeatSite(db.Model):
@@ -83,4 +85,53 @@ class Beatmap(db.Model):
             assert self.track_id is not None
         else:
             assert False
+
+class MiniRecordingView(db.Model):
+    __table__ = view("mini_recording_view", db.metadata,
+        select([Recording.id.label("id"),
+                Recording.gid.label("gid"),
+                Recording.name.label("name"),
+                Recording.artist_credit_id.label("artist_credit_id"),
+                select([URL.url])\
+                    .select_from(\
+                        URL.__table__.join(LinkRecordingURL)\
+                        .join(Link)\
+                        .join(LinkType)\
+                    )\
+                    .where(LinkRecordingURL.recording_id==Recording.id)\
+                    .where(LinkType.gid=='f25e301d-b87b-4561-86a0-5d2df6d26c0a')\
+                    .union(select([URL.url])\
+                        .select_from(\
+                            URL.__table__.join(LinkReleaseURL)
+                            .join(Link)\
+                            .join(LinkType)\
+                            .join(Release)\
+                            .join(Medium)\
+                            .join(Track)\
+                        )\
+                        .where(Track.recording_id==Recording.id)\
+                        .where(LinkType.gid=='004bd0c3-8a45-4309-ba52-fa99f3aa3d50')
+                    )\
+                    .limit(1)\
+                    .label("license_url"),
+                select([Release.gid.concat('/').concat(CoverArt.id)])\
+                    .select_from(\
+                        Release.__table__.join(CoverArt)\
+                        .join(Medium)\
+                        .join(Track)\
+                        .join(CoverArtType)\
+                        .join(ArtType)
+                    )\
+                    .where(Track.recording_id==Recording.id)\
+                    .where(ArtType.gid=='ac337166-a2b3-340c-a0b4-e2b00f1d40a2')\
+                    .order_by(func.random())\
+                    .limit(1)\
+                    .label("cover_id")
+               ])\
+        .select_from(Recording.__table__.join(Beatmap))\
+        .group_by(Recording.id, Recording.gid, Recording.name, Recording.artist_credit_id)\
+        .order_by(func.max(Beatmap.date).desc())
+    )
+    artist_credit = db.relationship(ArtistCredit)
+    beatmaps = db.relationship(Beatmap)
 
