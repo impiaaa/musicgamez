@@ -106,7 +106,7 @@ def fetch_osu():
 import csv, codecs
 from mbdata.models import Artist, Label
 def import_partybus_stream_permission():
-    """Import artist streaming permissions from Partybus's spreadsheet"""
+    """Import artist streaming permissions from PartyBus's spreadsheet"""
     with urlopen_with_ua("https://docs.google.com/spreadsheets/d/1QjLWvGHCslmupJKRn5JWnymK4Hxtq_O71JYXGw4yq5g/export?format=csv") as csvfile:
         reader = csv.reader(codecs.iterdecode(csvfile, 'utf-8'))
         for row in reader:
@@ -116,17 +116,20 @@ def import_partybus_stream_permission():
             name, genre, type, whereToAcquire, platform, permission, screenshot = row
             try:
                 if type == "Artist":
-                    a = db.session.query(Artist).filter(Artist.name==name).one()
-                    db.session.add(ArtistStreamPermission(artist=a, url=permission, source="Partybus"))
+                    e = db.session.query(Artist).filter(func.lower(Artist.name, type_=db.String)==name.lower()).one()
+                    if db.session.query(ArtistStreamPermission).filter(ArtistStreamPermission.artist_gid==e.gid).count() == 0:
+                        db.session.add(ArtistStreamPermission(artist=e, url=permission, source="PartyBus"))
                 elif type == "Label/Group":
-                    l = db.session.query(Label).filter(Label.name==name).one()
-                    db.session.add(LabelStreamPermission(label=l, url=permission, source="Partybus"))
-            except sqlalchemy.orm.exc.NoResultFound as e:
-                db.app.logger.error("Can't find %s %r: %s"%(type, name, e))
-                pass
-            except sqlalchemy.orm.exc.MultipleResultsFound as e:
-                db.app.logger.error("Can't find %s %r: %s"%(type, name, e))
-                pass
+                    e = db.session.query(Label).filter(func.lower(Label.name, type_=db.String)==name.lower()).one()
+                    if db.session.query(LabelStreamPermission).filter(LabelStreamPermission.label_gid==e.gid).count() == 0:
+                        db.session.add(LabelStreamPermission(label=e, url=permission, source="PartyBus"))
+            except sqlalchemy.orm.exc.NoResultFound as err:
+                db.app.logger.error("Can't find %s %r: %s"%(type, name, err))
+                continue
+            except sqlalchemy.orm.exc.MultipleResultsFound as err:
+                db.app.logger.error("Can't find %s %r: %s"%(type, name, err))
+                continue
+            db.app.logger.info("Added %s %r as %s"%(type, name, e.gid))
         db.session.commit()
 
 from bs4 import BeautifulSoup
@@ -139,7 +142,7 @@ def import_creatorhype_stream_permission():
         name = row["value"]["source"]
         url = soup.a['href']
         try:
-            a = db.session.query(Artist).filter(Artist.name==name).one()
+            a = db.session.query(Artist).filter(func.lower(Artist.name, type_=db.String)==name.lower()).one()
         except sqlalchemy.orm.exc.NoResultFound as e:
             db.app.logger.error("Can't find artist %r: %s"%(name, e))
             continue
@@ -149,6 +152,7 @@ def import_creatorhype_stream_permission():
         if db.session.query(ArtistStreamPermission).filter(ArtistStreamPermission.artist_gid==a.gid).count() > 0:
             continue
         db.session.add(ArtistStreamPermission(artist=a, url=url, source="Creator Hype"))
+        db.app.logger.info("Added artist %r as %s"%(name, a.gid))
     db.session.commit()
 
 from datetime import datetime
@@ -189,6 +193,12 @@ from zipfile import ZipFile
 from tempfile import TemporaryFile, NamedTemporaryFile
 from acoustid import fingerprint_file, lookup, WebServiceError
 
+def zipopen_lower(z, fname):
+    for info in z.infolist():
+        if info.filename.casefold() == fname:
+            return z.open(info)
+    return z.open(fname)
+
 @scheduler.task('interval', id='generate_fingerprint', minutes=3)
 def generate_fingerprint():
     with db.app.app_context():
@@ -199,7 +209,7 @@ def generate_fingerprint():
              .filter(Beatmap.external_site.has(BeatSite.short_name == 'bs'))\
              .order_by(Beatmap.last_checked)\
              .first()
-        if bm is None and session.query(Beatmap)\
+        '''if bm is None and session.query(Beatmap)\
                                  .filter(Beatmap.state == Beatmap.State.HAS_FINGERPRINT)\
                                  .count() == 0:
             # After all songs have a match, go back and get higher-quality
@@ -208,7 +218,7 @@ def generate_fingerprint():
                  .filter(Beatmap.state == Beatmap.State.MATCHED_WITH_STRING)\
                  .filter(Beatmap.external_site.has(BeatSite.short_name == 'bs'))\
                  .order_by(Beatmap.last_checked)\
-                 .first()
+                 .first()'''
         if bm is None:
             session.remove()
             return
@@ -227,8 +237,15 @@ def generate_fingerprint():
                 z = ZipFile(t)
                 url_file.close()
                 url_file = t
-                info = json.load(z.open('Info.dat'))
+                info = json.load(zipopen_lower(z, "info.dat"))
                 songfile = z.open(info['_songFilename'])
+            elif bm.external_site.short_name == 'osu':
+                t = TemporaryFile()
+                t.write(url_file.read())
+                z = ZipFile(t)
+                url_file.close()
+                url_file = t
+                songfile = zipopen_lower(z, "audio.mp3")
             t = NamedTemporaryFile()
             t.write(songfile.read())
             t.flush()
@@ -304,7 +321,7 @@ from mbdata.replication import mbslave_sync_main, Config
 from argparse import Namespace
 import os
 
-@scheduler.task('interval', id='mbsync', days=1)
+@scheduler.task('cron', id='mbsync', minute=2)
 def mbsync():
     config_paths = [os.path.join(db.app.instance_path, "mbslave.conf")]
     if "MBSLAVE_CONFIG" in os.environ:

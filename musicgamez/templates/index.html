@@ -9,8 +9,12 @@
 {% if recording.permission_url %}
 <a href="{{ recording.permission_url }}" title="Artist or label has given permission for streaming (click for conditions)"><i class="fa fa-television" aria-hidden="true"></i></a>
 {% endif %}
-{% if recording.license_url and recording.license_url.startswith("https://creativecommons.org/licenses/") %}
+{% if recording.license_url %}
+{% if recording.license_url.startswith("https://creativecommons.org/licenses/") or recording.license_url.startswith("https://creativecommons.org/publicdomain/") %}
 <a href="{{ recording.license_url }}" title="Licensed under Creative Commons (click for terms)"><i class="fa fa-creative-commons" aria-hidden="true"></i></a>
+{% else %}
+<a href="{{ recording.license_url }}" title="Available for licensing (click for terms)"><i class="fa fa-file-text-o" aria-hidden="true"></i></a>
+{% endif %}
 {% endif %}
 </div></div>
 <div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="https://musicbrainz.org/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
