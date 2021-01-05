@@ -81,7 +81,6 @@ def create_app(test_config=None):
     
     from musicgamez import main
     app.register_blueprint(main.bp)
-    app.add_url_rule("/", endpoint="index")
     
     @app.before_first_request
     def load_tasks():

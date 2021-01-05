@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}: Genres{% endblock %}
+{% block content %}
+<h2>Genres</h2>
+<ul class="genrelist">
+{% for genre, count in genres %}
+<li style="font-size: {{ count }}pt"><a href="{{ url_for('main.tag', tag=genre) }}">{{ genre }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}
+

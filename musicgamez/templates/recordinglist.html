@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}Home{% endblock %}
+{% block title %}: {{ pagetitle }}{% endblock %}
 {% block content %}
+<h2>{{ pagetitle }}</h2>
 <ul class="recordinglist">
 {% for recording in recordings %}
 <li {% if recording.cover_id %}style="background-image:linear-gradient(rgba(0,0,0,.5),transparent,rgba(0,0,0,.5)),url(//coverartarchive.org/release/{{ recording.cover_id }}-250.jpg)"{% endif %}
@@ -27,5 +28,14 @@
 </li>
 {% endfor %}
 </ul>
+<nav>
+{% if page > 0 %}
+<a title="Later" alt="Later" style="float: left" href="{{ url_for(request.endpoint, **dict(request.view_args, page=page-1)) }}">&lt;</a>
+{% endif %}
+{% if page < pages-1 %}
+<a title="Earlier" alt="Earlier" style="float: right" href="{{ url_for(request.endpoint, **dict(request.view_args, page=page+1)) }}">&gt;</a>
+{% endif %}
+<div style="clear: both;"></div>
+</nav>
 {% endblock %}
 
