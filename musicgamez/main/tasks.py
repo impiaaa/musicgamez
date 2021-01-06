@@ -54,7 +54,8 @@ def fetch_beatsaber():
                 break
         
         if imported > 0:
-            scheduler.add_job('match_with_string', match_with_string, trigger='date', replace_existing=True)
+            scheduler.resume_job('match_with_string')
+            scheduler.modify_job('match_with_string', trigger='date')
         db.app.logger.info("Imported {} beatmaps for {}".format(imported, site.name))
         session.remove()
 
@@ -99,7 +100,8 @@ def fetch_osu():
                 break
         
         if imported > 0:
-            scheduler.add_job('match_with_string', match_with_string, trigger='date', replace_existing=True)
+            scheduler.resume_job('match_with_string')
+            scheduler.modify_job('match_with_string', trigger='date')
         db.app.logger.info("Imported {} beatmaps for {}".format(imported, site.name))
         session.remove()
 
@@ -159,10 +161,12 @@ from datetime import datetime
 from sqlalchemy.sql import func
 from mbdata.models import ArtistCredit, Recording
 
+@scheduler.task('interval', id='match_with_string', next_run_time=None, seconds=60)
 def match_with_string():
     with db.app.app_context():
         matched = 0
         session = db.create_scoped_session()
+        total = 0
         for bm in session.query(Beatmap).filter(Beatmap.state == Beatmap.State.INITIAL):
             # TODO use normalize(nfkc) once on PosgreSQL 13
             # TODO use aliases
@@ -180,6 +184,7 @@ def match_with_string():
                 bm.recording = rec
                 bm.state = Beatmap.State.MATCHED_WITH_STRING
                 matched += 1
+            total += 1
             bm.last_checked = datetime.now()
             session.commit()
         session.remove()
@@ -188,6 +193,8 @@ def match_with_string():
             db.app.logger.info(s)
         else:
             db.app.logger.debug(s)
+        if total == 0:
+            scheduler.pause_job('match_with_string')
 
 from zipfile import ZipFile
 from tempfile import TemporaryFile, NamedTemporaryFile
