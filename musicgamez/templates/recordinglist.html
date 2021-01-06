@@ -18,7 +18,7 @@
 {% endif %}
 {% endif %}
 </div></div>
-<div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="https://musicbrainz.org/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
+<div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
 <ul class="bmlist">
 {% for beatmap in recording.beatmaps %}
 <li><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}" title="Mapped for {{ beatmap.external_site.name }} by {{ beatmap.choreographer }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.jpg') }}" /></a></li>

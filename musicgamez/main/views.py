@@ -8,6 +8,7 @@ from flask import url_for
 from math import ceil
 from werkzeug.exceptions import abort
 from sqlalchemy.sql import func
+import sqlalchemy
 
 from musicgamez import db
 from musicgamez.main.models import *
@@ -51,4 +52,26 @@ def tag(tag, page=0):
         .join(ReleaseTag)\
         .join(Tag)\
         .filter(Tag.name==tag), page, tag)
+
+@bp.route("/browse/artist")
+def artists():
+    return #render_template("genres.html", genres=db.session.query(Artist.name, func.count(Beatmap.id))\
+        #.select_from(Artist)\
+        #.join(ArtistCreditName)\
+        #.join(ArtistCredit)\
+        #.join(Recording)\
+        #.join(Beatmap)\
+        #.group_by(Artist.name)\
+        #.order_by(func.random()))
+
+@bp.route("/artist/<uuid:gid>", defaults={"page": 0})
+@bp.route("/artist/<uuid:gid>/<int:page>")
+def artist(gid, page=0):
+    try: a = db.session.query(Artist).filter(Artist.gid==str(gid)).one()
+    except sqlalchemy.orm.exc.NoResultFound: abort(404)
+    
+    return recordinglist(db.session.query(MiniRecordingView)\
+        .join(ArtistCredit)\
+        .join(ArtistCreditName)\
+        .filter(ArtistCreditName.artist==a), page, a.name)
 
