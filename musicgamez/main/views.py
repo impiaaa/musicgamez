@@ -6,7 +6,6 @@ from flask import render_template
 from flask import request
 from flask import url_for
 from math import ceil
-from werkzeug.exceptions import abort
 from sqlalchemy.sql import func
 import sqlalchemy
 
@@ -30,7 +29,7 @@ def latest(page=0):
 
 @bp.route("/browse/genre")
 def genres():
-    return render_template("genres.html", genres=db.session.query(Genre.name, func.count(Beatmap.id))\
+    g = db.session.query(Genre.name, func.count(Beatmap.id))\
         .select_from(Genre)\
         .join(Tag, Tag.name==Genre.name)\
         .join(ReleaseTag)\
@@ -40,7 +39,12 @@ def genres():
         .join(Recording)\
         .join(Beatmap)\
         .group_by(Genre.name)\
-        .order_by(func.random()))
+        .order_by(func.random())\
+        .all()
+    mn = min(g, key=lambda a: a[1])[1]
+    mx = max(g, key=lambda a: a[1])[1]
+    h = [(genre, (64*(count-mn)/(mx-mn))+8) for genre, count in g]
+    return render_template("genres.html", genres=h)
 
 @bp.route("/tag/<tag>", defaults={"page": 0})
 @bp.route("/tag/<tag>/<int:page>")
@@ -67,11 +71,22 @@ def artists():
 @bp.route("/artist/<uuid:gid>", defaults={"page": 0})
 @bp.route("/artist/<uuid:gid>/<int:page>")
 def artist(gid, page=0):
-    try: a = db.session.query(Artist).filter(Artist.gid==str(gid)).one()
-    except sqlalchemy.orm.exc.NoResultFound: abort(404)
-    
+    a = db.session.query(Artist).filter(Artist.gid==str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)\
         .join(ArtistCredit)\
         .join(ArtistCreditName)\
         .filter(ArtistCreditName.artist==a), page, a.name)
+
+@bp.route("/recording/<uuid:gid>")
+def recording(gid):
+    return render_template("recording.html", recording=db.session.query(Recording).filter(Recording.gid==str(gid)).one())
+
+@bp.route("/beatmap/<sitename>/<extid>")
+def beatmap(sitename, extid):
+    site = db.session.query(BeatSite).filter(BeatSite.short_name==sitename).one()
+    bm = db.session.query(Beatmap).filter(Beatmap.external_site==site, Beatmap.external_id==extid).one()
+    if bm.recording_gid is None:
+        return render_template("beatmap-standalone.html", beatmap=bm)
+    else:
+        return redirect(url_for('main.recording', gid=bm.recording_gid))
 

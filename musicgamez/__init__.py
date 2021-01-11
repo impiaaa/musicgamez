@@ -30,13 +30,17 @@ import apscheduler
 from sqlalchemy.schema import MetaData
 from sqlalchemy.pool import NullPool
 from sqlalchemy import orm, event
+from werkzeug.exceptions import HTTPException
 
 metadata = MetaData(schema='public')
 db = SQLAlchemy(metadata=metadata)
 scheduler = APScheduler()
 
-def page_not_found(e):
-    return render_template('error.html', error=e), 404
+def render_error(e):
+    return render_template('error.html', name=e.name, code=e.code, description=e.description), e.code
+
+def entity_not_found(e):
+    return render_template('error.html', name="Not Found", code=404, description="The requested entity was not found. If you entered the URL manually please check your spelling and try again."), 404
 
 def create_app(test_config=None):
     # create and configure the app
@@ -85,7 +89,8 @@ def create_app(test_config=None):
     from musicgamez import main
     app.register_blueprint(main.bp)
     
-    app.register_error_handler(404, page_not_found)
+    app.register_error_handler(HTTPException, render_error)
+    app.register_error_handler(orm.exc.NoResultFound, entity_not_found)
     
     @app.before_first_request
     def load_tasks():

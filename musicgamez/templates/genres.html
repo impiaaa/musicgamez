@@ -3,8 +3,8 @@
 {% block content %}
 <h2>Genres</h2>
 <ul class="genrelist">
-{% for genre, count in genres %}
-<li style="font-size: {{ count }}pt"><a href="{{ url_for('main.tag', tag=genre) }}">{{ genre }}</a></li>
+{% for genre, size in genres %}
+<li style="font-size: {{ size }}pt"><a href="{{ url_for('main.tag', tag=genre) }}">{{ genre }}</a></li>
 {% endfor %}
 </ul>
 {% endblock %}

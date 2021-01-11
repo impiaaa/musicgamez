@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}: {{ beatmap.title }}{% endblock %}
+{% block content %}
+<h2>{{ beatmap.title }}</a></h2>
+<h3>{{ beatmap.artist }}</h3>
+<table>
+{% include 'beatmap-row.html' %}
+</table>
+{% endblock %}
+

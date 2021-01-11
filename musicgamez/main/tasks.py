@@ -53,9 +53,9 @@ def fetch_beatsaber():
             if lastPage:
                 break
         
-        if imported > 0:
-            scheduler.resume_job('match_with_string')
-            scheduler.modify_job('match_with_string', trigger='date')
+        #if imported > 0:
+            #scheduler.resume_job('match_with_string')
+            #scheduler.modify_job('match_with_string', trigger='interval')
         db.app.logger.info("Imported {} beatmaps for {}".format(imported, site.name))
         session.remove()
 
@@ -99,9 +99,9 @@ def fetch_osu():
             if lastPage:
                 break
         
-        if imported > 0:
-            scheduler.resume_job('match_with_string')
-            scheduler.modify_job('match_with_string', trigger='date')
+        #if imported > 0:
+            #scheduler.resume_job('match_with_string')
+            #scheduler.modify_job('match_with_string', trigger='interval')
         db.app.logger.info("Imported {} beatmaps for {}".format(imported, site.name))
         session.remove()
 
@@ -161,7 +161,7 @@ from datetime import datetime
 from sqlalchemy.sql import func
 from mbdata.models import ArtistCredit, Recording
 
-@scheduler.task('interval', id='match_with_string', next_run_time=None, seconds=60)
+@scheduler.task('interval', id='match_with_string', seconds=60)
 def match_with_string():
     with db.app.app_context():
         matched = 0
@@ -193,8 +193,8 @@ def match_with_string():
             db.app.logger.info(s)
         else:
             db.app.logger.debug(s)
-        if total == 0:
-            scheduler.pause_job('match_with_string')
+        #if total == 0:
+            #scheduler.pause_job('match_with_string')
 
 from zipfile import ZipFile
 from tempfile import TemporaryFile, NamedTemporaryFile

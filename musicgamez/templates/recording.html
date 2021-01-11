@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}: {{ recording.name }}{% endblock %}
+{% block content %}
+<h2><a href="https://musicbrainz.org/recording/{{ recording.gid }}">{{ recording.name }}</a></h2>
+<h3>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}</h3>
+<table>
+{% for beatmap in recording.beatmaps %}
+{% include 'beatmap-row.html' %}
+{% endfor %}
+</table>
+{% endblock %}
+

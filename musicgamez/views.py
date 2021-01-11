@@ -18,7 +18,7 @@ class DropView(DDLElement):
     
 @compiler.compiles(CreateView)
 def compile(element, compiler, **kw):
-    return "CREATE %s%sVIEW %s AS %s" % (
+    return "CREATE %s%sVIEW IF NOT EXISTS %s AS %s" % (
         "TEMPORARY " if element.temporary else "",
         "MATERIALIZED " if element.material else "",
         element.name, 
