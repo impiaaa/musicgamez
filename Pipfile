@@ -12,8 +12,10 @@ Flask-APScheduler = "*"
 Flask-SQLAlchemy = "*"
 pyacoustid = "*"
 beautifulsoup4 = "*"
+flask-babel = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
+

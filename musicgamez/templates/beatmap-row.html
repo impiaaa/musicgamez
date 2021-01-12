@@ -1,7 +1,7 @@
 <tr>
-<td><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.jpg') }}" /></td>
+<td><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.jpg') }}" class="bsite" /></a></td>
 <td>{{ beatmap.choreographer }}</td>
-<td>{{ beatmap.date }}</td>
+<td>{{ beatmap.date|format_datetime }}</td>
 <td>{{ beatmap.state }}</td>
 </tr>
 

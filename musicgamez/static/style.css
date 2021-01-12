@@ -139,11 +139,24 @@ nav ul li ul a:hover {
     margin: 0;
 }
 
-.recordinglist img {
+.bsite {
     border-radius: 4px;
 }
 
 .genrelist>li {
     display: inline;
+}
+
+.coverwall {
+    overflow: hidden;
+    border-radius: 8px;
+    max-height: 250px;
+    max-width: 100%;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+td {
+    padding: 2px 8px;
 }
 

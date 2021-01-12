@@ -19,7 +19,7 @@ logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
 import os
 
 import click
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask.cli import with_appcontext
 from flask_sqlalchemy import SQLAlchemy
 from flask_apscheduler import APScheduler
@@ -31,10 +31,12 @@ from sqlalchemy.schema import MetaData
 from sqlalchemy.pool import NullPool
 from sqlalchemy import orm, event
 from werkzeug.exceptions import HTTPException
+from flask_babel import Babel, format_datetime
 
 metadata = MetaData(schema='public')
 db = SQLAlchemy(metadata=metadata)
 scheduler = APScheduler()
+babel = Babel()
 
 def render_error(e):
     return render_template('error.html', name=e.name, code=e.code, description=e.description), e.code
@@ -61,7 +63,8 @@ def create_app(test_config=None):
             # infrastructure (APScheduler, SQLAlchemy connection pools) depend
             # on a shared memory space between threads.
             'default': ThreadPoolExecutor()
-        }
+        },
+        LANGUAGES = ['en']
     )
 
     os.makedirs(app.instance_path, exist_ok=True)
@@ -96,6 +99,9 @@ def create_app(test_config=None):
     def load_tasks():
         from musicgamez.main import tasks
 
+    babel.init_app(app)
+    app.jinja_env.filters['format_datetime'] = format_datetime
+    
     app.cli.add_command(init_db_command)
     app.cli.add_command(import_partybus_stream_permission)
     app.cli.add_command(import_creatorhype_stream_permission)
@@ -103,6 +109,10 @@ def create_app(test_config=None):
     app.cli.add_command(fetch_osu_command)
 
     return app
+
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(db.app.config['LANGUAGES'])
 
 def init_db():
     db.drop_all()

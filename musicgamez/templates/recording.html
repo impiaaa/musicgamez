@@ -1,8 +1,45 @@
 {% extends 'base.html' %}
 {% block title %}: {{ recording.name }}{% endblock %}
 {% block content %}
+<div class="coverwall">
+{% for coverart in covers -%}
+<img src="//coverartarchive.org/release/{{ coverart.release.gid }}/{{ coverart.id }}-250.jpg" />
+{%- endfor %}
+</div>
 <h2><a href="https://musicbrainz.org/recording/{{ recording.gid }}">{{ recording.name }}</a></h2>
 <h3>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}</h3>
+{% for rec_license in rec_licenses %}
+<p>
+<a href="{{ rec_license.url }}">
+{% if rec_license.url.startswith("https://creativecommons.org/licenses/") or rec_license.url.startswith("https://creativecommons.org/publicdomain/") %}
+<i class="fa fa-creative-commons" aria-hidden="true"></i>Recording licensed under Creative Commons (click for terms)
+{% else %}
+<i class="fa fa-file-text-o" aria-hidden="true"></i>Recording available for licensing (click for terms)
+{% endif %}
+</a>
+</p>
+{% endfor %}
+{% for release, url in rel_licenses %}
+<p>
+<a href="{{ url.url }}">
+{% if url.url.startswith("https://creativecommons.org/licenses/") or url.url.startswith("https://creativecommons.org/publicdomain/") %}
+<i class="fa fa-creative-commons" aria-hidden="true"></i> Release "{{ release.name }}" licensed under Creative Commons (click for terms)
+{% else %}
+<i class="fa fa-file-text-o" aria-hidden="true"></i> Release "{{ release.name }}" available for licensing (click for terms)
+{% endif %}
+</a>
+</p>
+{% endfor %}
+{% for artist, url in artist_perms %}
+<p>
+<a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ artist.name }} has given permission for streaming (click for conditions)</a>
+</p>
+{% endfor %}
+{% for release, label, url in label_perms %}
+<p>
+<a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ label.name }} has given permission for streaming (click for conditions)</a>
+</p>
+{% endfor %}
 <table>
 {% for beatmap in recording.beatmaps %}
 {% include 'beatmap-row.html' %}

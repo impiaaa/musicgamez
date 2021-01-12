@@ -8,10 +8,10 @@ from flask import url_for
 from math import ceil
 from sqlalchemy.sql import func
 import sqlalchemy
+from mbdata.models import *
 
 from musicgamez import db
 from musicgamez.main.models import *
-from mbdata.models import *
 
 bp = Blueprint("main", __name__)
 
@@ -79,7 +79,56 @@ def artist(gid, page=0):
 
 @bp.route("/recording/<uuid:gid>")
 def recording(gid):
-    return render_template("recording.html", recording=db.session.query(Recording).filter(Recording.gid==str(gid)).one())
+    rec = db.session.query(Recording).filter(Recording.gid==str(gid)).one()
+    covers = db.session.query(CoverArt)\
+                    .join(Release)\
+                    .join(Medium)\
+                    .join(Track)\
+                    .join(CoverArtType)\
+                    .join(ArtType)\
+                    .filter(Track.recording==rec)\
+                    .filter(ArtType.gid=='ac337166-a2b3-340c-a0b4-e2b00f1d40a2')\
+                    .order_by(func.random())\
+                    .limit(5)
+    rec_licenses = db.session.query(URL)\
+                    .join(LinkRecordingURL)\
+                    .join(Link)\
+                    .join(LinkType)\
+                    .filter(LinkRecordingURL.recording==rec)\
+                    .filter(LinkType.gid=='f25e301d-b87b-4561-86a0-5d2df6d26c0a')
+    rel_licenses = db.session.query(Release, URL)\
+                    .select_from(URL)\
+                    .join(LinkReleaseURL)\
+                    .join(Link)\
+                    .join(LinkType)\
+                    .join(Release)\
+                    .join(Medium)\
+                    .join(Track)\
+                    .filter(Track.recording==rec)\
+                    .filter(LinkType.gid=='004bd0c3-8a45-4309-ba52-fa99f3aa3d50')
+    artist_perms = db.session.query(Artist, ArtistStreamPermission)\
+                    .select_from(ArtistStreamPermission)\
+                    .join(Artist)\
+                    .join(ArtistCreditName)\
+                    .join(ArtistCredit)\
+                    .filter(ArtistCredit.id==rec.artist_credit_id)\
+                    .distinct(Artist.id)
+    label_perms = db.session.query(Release, Label, LabelStreamPermission)\
+                    .select_from(LabelStreamPermission)\
+                    .join(Label)\
+                    .join(ReleaseLabel)\
+                    .join(Release)\
+                    .join(Medium)\
+                    .join(Track)\
+                    .filter(Track.recording==rec)\
+                    .distinct(Label.id)
+    return render_template("recording.html", \
+        recording=rec, \
+        covers=covers, \
+        rec_licenses=rec_licenses,
+        rel_licenses=rel_licenses,
+        artist_perms=artist_perms,
+        label_perms=label_perms)
 
 @bp.route("/beatmap/<sitename>/<extid>")
 def beatmap(sitename, extid):
