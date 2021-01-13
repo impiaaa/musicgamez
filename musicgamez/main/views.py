@@ -7,7 +7,7 @@ from flask import request
 from flask import url_for
 from math import ceil
 from mbdata.models import *
-from musicgamez import db
+from musicgamez import db, translate_artist
 from musicgamez.main.models import *
 import sqlalchemy
 from sqlalchemy.sql import func
@@ -70,7 +70,7 @@ def artist(gid, page=0):
     return recordinglist(db.session.query(MiniRecordingView)
                          .join(ArtistCredit)
                          .join(ArtistCreditName)
-                         .filter(ArtistCreditName.artist == a), page, a.name)
+                         .filter(ArtistCreditName.artist == a), page, translate_artist(a))
 
 
 @bp.route("/recording/<uuid:gid>")

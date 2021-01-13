@@ -5,7 +5,7 @@
 <ul class="recordinglist">
 {% for recording in recordings %}
 <li {% if recording.cover_id %}style="background-image:linear-gradient(rgba(0,0,0,.5),transparent,rgba(0,0,0,.5)),url(//coverartarchive.org/release/{{ recording.cover_id }}-250.jpg)"{% endif %}
-><div><div class="titlerow"><h3><a href="/recording/{{ recording.gid }}">{{ recording.name }}</a></h3>
+><div><div class="titlerow"><h3><a href="/recording/{{ recording.gid }}">{{ recording|translate_recording }}</a></h3>
 <div class="licenselist">
 {% if recording.permission_url %}
 <a href="{{ recording.permission_url }}" title="Artist or label has given permission for streaming (click for conditions)"><i class="fa fa-television" aria-hidden="true"></i></a>
@@ -18,7 +18,7 @@
 {% endif %}
 {% endif %}
 </div></div>
-<div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist.name }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
+<div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist|translate_artist }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
 <ul class="bmlist">
 {% for beatmap in recording.beatmaps %}
 <li><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}" title="Mapped for {{ beatmap.external_site.name }} by {{ beatmap.choreographer }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.jpg') }}" class="bsite" /></a></li>

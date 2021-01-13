@@ -29,7 +29,7 @@ from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import click
 from flask_apscheduler import APScheduler
-from flask_babel import Babel, format_datetime
+from flask_babel import Babel, get_locale
 from flask.cli import with_appcontext
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
@@ -77,6 +77,10 @@ def create_app(test_config=None):
         },
         LANGUAGES=['en']
     )
+    app.jinja_options['trim_blocks'] = True
+    app.jinja_options['lstrip_blocks'] = True
+    app.jinja_env.trim_blocks = True
+    app.jinja_env.lstrip_blocks = True
 
     os.makedirs(app.instance_path, exist_ok=True)
 
@@ -112,7 +116,9 @@ def create_app(test_config=None):
         from musicgamez.main import tasks
 
     babel.init_app(app)
-    app.jinja_env.filters['format_datetime'] = format_datetime
+
+    app.jinja_env.filters['translate_artist'] = translate_artist
+    app.jinja_env.filters['translate_recording'] = translate_recording
 
     app.cli.add_command(init_db_command)
     app.cli.add_command(import_partybus_stream_permission)
@@ -125,8 +131,43 @@ def create_app(test_config=None):
 
 
 @babel.localeselector
-def get_locale():
+def select_locale():
     return request.accept_languages.best_match(db.app.config['LANGUAGES'])
+
+
+def translate_entity(type, typetype, idcol, id, typegid, name):
+    result = db.session.query(type)\
+        .join(typetype)\
+        .filter(idcol==id,
+            type.locale==get_locale().language,
+            type.primary_for_locale==True,
+            typetype.gid==typegid)\
+        .one_or_none()
+    return result.name if result else name
+
+
+def translate_artist(artist):
+    from mbdata.models import ArtistAlias, ArtistAliasType, ArtistCreditName
+    if isinstance(artist, ArtistCreditName):
+        artist_id = artist.artist_id
+    else:
+        artist_id = artist.id
+    return translate_entity(ArtistAlias,
+        ArtistAliasType,
+        ArtistAlias.artist_id,
+        artist_id,
+        '894afba6-2816-3c24-8072-eadb66bd04bc',
+        artist.name)
+
+
+def translate_recording(recording):
+    from mbdata.models import Recording, RecordingAlias, RecordingAliasType
+    return translate_entity(RecordingAlias,
+        RecordingAliasType,
+        RecordingAlias.recording_id,
+        recording.id,
+        '5d564c8f-97de-3572-94bb-7f40ad661499',
+        recording.name)
 
 
 def init_db():
