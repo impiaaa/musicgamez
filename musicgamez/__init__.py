@@ -106,6 +106,7 @@ def create_app(test_config=None):
     app.cli.add_command(import_partybus_stream_permission)
     app.cli.add_command(import_creatorhype_stream_permission)
     app.cli.add_command(fetch_beatsaber_command)
+    app.cli.add_command(fetch_beatsaber_single_command)
     app.cli.add_command(fetch_osu_command)
 
     return app
@@ -157,6 +158,20 @@ def fetch_osu_command():
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_osu, match_with_string
     fetch_osu()
+    try: scheduler.shutdown()
+    except apscheduler.schedulers.SchedulerNotRunningError: pass
+    match_with_string()
+
+@click.command("fetch-beatsaber-single")
+@click.option('-i', '--id')
+@with_appcontext
+def fetch_beatsaber_single_command(id):
+    scheduler.shutdown()
+    from musicgamez.main.tasks import fetch_beatsaber_single, match_with_string, urlopen_with_ua
+    import json
+    session = db.create_scoped_session()
+    gametrack = json.load(urlopen_with_ua("https://beatsaver.com/api/maps/detail/"+id))
+    fetch_beatsaber_single(session, gametrack)
     try: scheduler.shutdown()
     except apscheduler.schedulers.SchedulerNotRunningError: pass
     match_with_string()

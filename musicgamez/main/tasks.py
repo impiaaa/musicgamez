@@ -11,6 +11,33 @@ def urlopen_with_ua(u, **kwargs):
         headers.update(kwargs.pop("headers"))
     return urlopen(Request(u, headers=headers, **kwargs))
 
+def fetch_beatsaber_single(session, gametrack):
+    site = session.query(BeatSite).filter(BeatSite.short_name=='bs').one()
+    meta = gametrack['metadata']
+    songName = meta['songName']
+    mapperName = meta['levelAuthorName']
+    if meta['songAuthorName'].casefold() == mapperName.casefold():
+        artistName = meta['songSubName']
+    else:
+        artistName = meta['songAuthorName']
+    
+    q = session.query(Beatmap).filter(Beatmap.external_site==site,
+                                      Beatmap.external_id==gametrack['key'])
+    if q.count() > 0:
+        return
+    
+    bm = Beatmap(artist=artistName,
+                 title=songName,
+                 external_id=gametrack['key'],
+                 external_site=site,
+                 choreographer=mapperName,
+                 date=gametrack['uploaded'])
+    
+    session.add(bm)
+    session.commit()
+    
+    return bm
+
 @scheduler.task('interval', id='fetch_beatsaber', hours=1, jitter=60)
 def fetch_beatsaber():
     with db.app.app_context():
@@ -24,30 +51,9 @@ def fetch_beatsaber():
             
             lastPage = False
             for gametrack in response['docs']:
-                meta = gametrack['metadata']
-                songName = meta['songName']
-                mapperName = meta['levelAuthorName']
-                if meta['songAuthorName'].casefold() == mapperName.casefold():
-                    artistName = meta['songSubName']
-                else:
-                    artistName = meta['songAuthorName']
-                
-                q = session.query(Beatmap).filter(Beatmap.external_site==site,
-                                                  Beatmap.external_id==gametrack['key'])
-                if q.count() > 0:
+                if fetch_beatsaber_single(session, gametrack) is None:
                     lastPage = True
                     break
-                    #continue
-                
-                bm = Beatmap(artist=artistName,
-                             title=songName,
-                             external_id=gametrack['key'],
-                             external_site=site,
-                             choreographer=mapperName,
-                             date=gametrack['uploaded'])
-                
-                session.add(bm)
-                session.commit()
                 imported += 1
             
             if lastPage:
@@ -76,14 +82,12 @@ def fetch_osu():
             response = json.load(urlopen_with_ua("https://osu.ppy.sh/api/v2/beatmapsets/search?sort=updated_desc&s=any&"+urlencode(cursor), headers={"Authorization": "Bearer {}".format(token)}))
             cursor = {"cursor[{}]".format(k): v for k, v in response['cursor'].items()}
             
-            lastPage = False
             for gametrack in response['beatmapsets']:
                 extId = str(gametrack['id'])
                 q = session.query(Beatmap).filter(Beatmap.external_site==site,
                                                   Beatmap.external_id==extId)
                 if q.count() > 0:
-                    lastPage = True
-                    break
+                    continue
                 
                 bm = Beatmap(artist=gametrack['artist_unicode'],
                              title=gametrack['title_unicode'],
@@ -95,9 +99,6 @@ def fetch_osu():
                 session.add(bm)
                 session.commit()
                 imported += 1
-            
-            if lastPage:
-                break
         
         #if imported > 0:
             #scheduler.resume_job('match_with_string')
@@ -328,7 +329,7 @@ from mbdata.replication import mbslave_sync_main, Config
 from argparse import Namespace
 import os
 
-@scheduler.task('cron', id='mbsync', minute=2)
+@scheduler.task('cron', id='mbsync', minute=2, jitter=60)
 def mbsync():
     config_paths = [os.path.join(db.app.instance_path, "mbslave.conf")]
     if "MBSLAVE_CONFIG" in os.environ:
