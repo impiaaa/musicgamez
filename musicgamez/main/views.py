@@ -20,14 +20,16 @@ perpage = 36
 def recordinglist(q, page, pagetitle=None):
     if pagetitle is None:
         pagetitle = request.endpoint.split('.')[-1].title()
-    return render_template("recordinglist.html", recordings=q.limit(perpage).offset(
-        perpage * page), page=page, pages=ceil(q.count() / perpage), pagetitle=pagetitle)
+    result = q.paginate(page, perpage, True)
+    return render_template("recordinglist.html", recordings=result.items,
+        has_next=result.has_next, has_prev=result.has_prev,
+        next_num=result.next_num, prev_num=result.prev_num, pagetitle=pagetitle)
 
 
 @bp.route("/")
-@bp.route("/latest", defaults={"page": 0})
+@bp.route("/latest", defaults={"page": 1})
 @bp.route("/latest/<int:page>")
-def latest(page=0):
+def latest(page=1):
     return recordinglist(db.session.query(MiniRecordingView), page)
 
 
@@ -51,9 +53,9 @@ def genres():
     return render_template("genres.html", genres=h)
 
 
-@bp.route("/tag/<tag>", defaults={"page": 0})
+@bp.route("/tag/<tag>", defaults={ "page": 1})
 @bp.route("/tag/<tag>/<int:page>")
-def tag(tag, page=0):
+def tag(tag, page=1):
     return recordinglist(db.session.query(MiniRecordingView)
                          .join(Track)
                          .join(Medium)
@@ -63,9 +65,9 @@ def tag(tag, page=0):
                          .filter(Tag.name == tag), page, tag)
 
 
-@bp.route("/artist/<uuid:gid>", defaults={"page": 0})
+@bp.route("/artist/<uuid:gid>", defaults={ "page": 1})
 @bp.route("/artist/<uuid:gid>/<int:page>")
-def artist(gid, page=0):
+def artist(gid, page=1):
     a = db.session.query(Artist).filter(Artist.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
                          .join(ArtistCredit)

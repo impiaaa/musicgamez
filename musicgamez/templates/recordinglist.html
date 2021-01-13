@@ -29,11 +29,11 @@
 {% endfor %}
 </ul>
 <nav>
-{% if page > 0 %}
-<a title="Later" alt="Later" style="float: left" href="{{ url_for(request.endpoint, **dict(request.view_args, page=page-1)) }}">&lt;</a>
+{% if has_prev %}
+<a title="Later" alt="Later" style="float: left" href="{{ url_for(request.endpoint, **dict(request.view_args, page=prev_num)) }}">&lt;</a>
 {% endif %}
-{% if page < pages-1 %}
-<a title="Earlier" alt="Earlier" style="float: right" href="{{ url_for(request.endpoint, **dict(request.view_args, page=page+1)) }}">&gt;</a>
+{% if has_next %}
+<a title="Earlier" alt="Earlier" style="float: right" href="{{ url_for(request.endpoint, **dict(request.view_args, page=next_num)) }}">&gt;</a>
 {% endif %}
 <div style="clear: both;"></div>
 </nav>
