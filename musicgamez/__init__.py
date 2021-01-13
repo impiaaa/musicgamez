@@ -1,57 +1,68 @@
 import logging
 
+
 class ColorFormatter(logging.Formatter):
     def format(self, record):
-        record.color = {logging.CRITICAL: 35, # magenta
-                        logging.ERROR:    31, # red
-                        logging.WARNING:  33, # yellow
-                        logging.INFO:     32, # green
-                        logging.DEBUG:    34  # blue
+        record.color = {logging.CRITICAL: 35,  # magenta
+                        logging.ERROR:    31,  # red
+                        logging.WARNING:  33,  # yellow
+                        logging.INFO:     32,  # green
+                        logging.DEBUG:    34   # blue
                         }.get(record.levelno, 0)
         return super().format(record)
+
+
 h = logging.StreamHandler()
-h.setFormatter(ColorFormatter(fmt='{asctime} {name}[{threadName}] \033[{color}m{levelname}\033[0m: {message}', style='{'))
+h.setFormatter(
+    ColorFormatter(
+        fmt='{asctime} {name}[{threadName}] \033[{color}m{levelname}\033[0m: {message}',
+        style='{'))
 logging.basicConfig(handlers=[h])
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
 
-import os
 
-import click
-from flask import Flask, render_template, request
-from flask.cli import with_appcontext
-from flask_sqlalchemy import SQLAlchemy
-from flask_apscheduler import APScheduler
+import apscheduler
+from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from apscheduler.executors.pool import ThreadPoolExecutor
-import apscheduler
-from sqlalchemy.schema import MetaData
-from sqlalchemy.pool import NullPool
-from sqlalchemy import orm, event
-from werkzeug.exceptions import HTTPException
+import click
+from flask_apscheduler import APScheduler
 from flask_babel import Babel, format_datetime
+from flask.cli import with_appcontext
+from flask import Flask, render_template, request
+from flask_sqlalchemy import SQLAlchemy
+import os
+from sqlalchemy import orm, event
+from sqlalchemy.pool import NullPool
+from sqlalchemy.schema import MetaData
+from werkzeug.exceptions import HTTPException
+
 
 metadata = MetaData(schema='public')
 db = SQLAlchemy(metadata=metadata)
 scheduler = APScheduler()
 babel = Babel()
 
+
 def render_error(e):
-    return render_template('error.html', name=e.name, code=e.code, description=e.description), e.code
+    return render_template('error.html', name=e.name,
+                           code=e.code, description=e.description), e.code
+
 
 def entity_not_found(e):
-    return render_template('error.html', name="Not Found", code=404, description="The requested entity was not found. If you entered the URL manually please check your spelling and try again."), 404
+    return render_template('error.html', name="Not Found", code=404,
+                           description="The requested entity was not found. If you entered the URL manually please check your spelling and try again."), 404
+
 
 def create_app(test_config=None):
-    # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev"),
-        SQLALCHEMY_TRACK_MODIFICATIONS = False,
-        SCHEDULER_API_ENABLED = True,
-        SCHEDULER_EXECUTORS = {
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SCHEDULER_API_ENABLED=True,
+        SCHEDULER_EXECUTORS={
             # This is going to bite me later. Threads in Python are bound by the
             # Global Interpreter Lock, which means threads can only be preempted
             # during OS calls like I/O or sleep, not execution. Normally this
@@ -64,7 +75,7 @@ def create_app(test_config=None):
             # on a shared memory space between threads.
             'default': ThreadPoolExecutor()
         },
-        LANGUAGES = ['en']
+        LANGUAGES=['en']
     )
 
     os.makedirs(app.instance_path, exist_ok=True)
@@ -78,30 +89,31 @@ def create_app(test_config=None):
 
     db.app = app
     db.init_app(app)
-    
+
     app.config.from_mapping(
-        SCHEDULER_JOBSTORES = {
-            'default': MemoryJobStore()#SQLAlchemyJobStore(url=app.config.get('SQLALCHEMY_DATABASE_URI'))
+        SCHEDULER_JOBSTORES={
+            #SQLAlchemyJobStore(url=app.config.get('SQLALCHEMY_DATABASE_URI'))
+            'default': MemoryJobStore()
         },
     )
     if scheduler.running:
         scheduler.shutdown()
     scheduler.init_app(app)
     scheduler.start()
-    
+
     from musicgamez import main
     app.register_blueprint(main.bp)
-    
+
     app.register_error_handler(HTTPException, render_error)
     app.register_error_handler(orm.exc.NoResultFound, entity_not_found)
-    
+
     @app.before_first_request
     def load_tasks():
         from musicgamez.main import tasks
 
     babel.init_app(app)
     app.jinja_env.filters['format_datetime'] = format_datetime
-    
+
     app.cli.add_command(init_db_command)
     app.cli.add_command(import_partybus_stream_permission)
     app.cli.add_command(import_creatorhype_stream_permission)
@@ -111,13 +123,16 @@ def create_app(test_config=None):
 
     return app
 
+
 @babel.localeselector
 def get_locale():
     return request.accept_languages.best_match(db.app.config['LANGUAGES'])
 
+
 def init_db():
     db.drop_all()
     db.create_all()
+
 
 @click.command("init-db")
 @with_appcontext
@@ -126,12 +141,14 @@ def init_db_command():
     init_db()
     click.echo("Initialized the database.")
 
+
 @click.command("import-partybus-stream-permission")
 @with_appcontext
 def import_partybus_stream_permission():
     """Import artist streaming permissions from Partybus's spreadsheet"""
     from musicgamez.main.tasks import import_partybus_stream_permission
     import_partybus_stream_permission()
+
 
 @click.command("import-creatorhype-stream-permission")
 @with_appcontext
@@ -140,6 +157,7 @@ def import_creatorhype_stream_permission():
     from musicgamez.main.tasks import import_creatorhype_stream_permission
     import_creatorhype_stream_permission()
 
+
 @click.command("fetch-beatsaber")
 @with_appcontext
 def fetch_beatsaber_command():
@@ -147,9 +165,12 @@ def fetch_beatsaber_command():
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_beatsaber, match_with_string
     fetch_beatsaber()
-    try: scheduler.shutdown()
-    except apscheduler.schedulers.SchedulerNotRunningError: pass
+    try:
+        scheduler.shutdown()
+    except apscheduler.schedulers.SchedulerNotRunningError:
+        pass
     match_with_string()
+
 
 @click.command("fetch-osu")
 @with_appcontext
@@ -158,9 +179,12 @@ def fetch_osu_command():
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_osu, match_with_string
     fetch_osu()
-    try: scheduler.shutdown()
-    except apscheduler.schedulers.SchedulerNotRunningError: pass
+    try:
+        scheduler.shutdown()
+    except apscheduler.schedulers.SchedulerNotRunningError:
+        pass
     match_with_string()
+
 
 @click.command("fetch-beatsaber-single")
 @click.option('-i', '--id')
@@ -170,9 +194,13 @@ def fetch_beatsaber_single_command(id):
     from musicgamez.main.tasks import fetch_beatsaber_single, match_with_string, urlopen_with_ua
     import json
     session = db.create_scoped_session()
-    gametrack = json.load(urlopen_with_ua("https://beatsaver.com/api/maps/detail/"+id))
+    gametrack = json.load(
+        urlopen_with_ua(
+            "https://beatsaver.com/api/maps/detail/" +
+            id))
     fetch_beatsaber_single(session, gametrack)
-    try: scheduler.shutdown()
-    except apscheduler.schedulers.SchedulerNotRunningError: pass
+    try:
+        scheduler.shutdown()
+    except apscheduler.schedulers.SchedulerNotRunningError:
+        pass
     match_with_string()
-
