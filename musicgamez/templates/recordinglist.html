@@ -16,6 +16,8 @@
 {% else %}
 <a href="{{ recording.license_url }}" title="Available for licensing (click for terms)"><i class="fa fa-file-text-o" aria-hidden="true"></i></a>
 {% endif %}
+{% elif recording.selfpublish %}
+<span title="Not published under a label"><i class="fa fa-circle-thin" aria-hidden="true"></i></span>
 {% endif %}
 </div></div>
 <div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist|translate_artist }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
