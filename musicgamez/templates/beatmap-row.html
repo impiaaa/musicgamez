@@ -3,5 +3,15 @@
 <td>{{ beatmap.choreographer }}</td>
 <td>{{ beatmap.date|datetimeformat }}</td>
 <td>{{ beatmap.state }}</td>
+<td>
+<form action="{{ url_for('main.beatmap', sitename=beatmap.external_site.short_name, extid=beatmap.external_id) }}" method="post">
+{% if beatmap.state == State.MATCHED_WITH_STRING or beatmap.state == State.NO_MATCH %}
+<button type="submit" name="action" value="rematch">Request re-match</submit>
+{% endif %}
+{% if beatmap.recording_gid %}
+<button type="submit" name="action" value="incorrect">Report incorrect match</submit>
+{% endif %}
+</form>
+</td>
 </tr>
 

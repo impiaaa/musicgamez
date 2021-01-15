@@ -1,5 +1,5 @@
+from flask import abort
 from flask import Blueprint
-from flask import flash
 from flask import g
 from flask import redirect
 from flask import render_template
@@ -120,23 +120,60 @@ def recording(gid):
                     .join(Track)\
                     .filter(Track.recording == rec)\
                     .distinct(Label.id)
+    links = db.session.query(URL, LinkType)\
+        .select_from(URL)\
+        .join(LinkRecordingURL)\
+        .join(Link)\
+        .join(LinkType)\
+        .filter(LinkRecordingURL.recording==rec)\
+        .filter(LinkType.gid != 'f25e301d-b87b-4561-86a0-5d2df6d26c0a')\
+        .union(db.session.query(URL, LinkType)\
+            .select_from(URL)\
+            .join(LinkReleaseURL)\
+            .join(Link)\
+            .join(LinkType)\
+            .join(Release)\
+            .join(Medium)\
+            .join(Track)\
+            .filter(Track.recording == rec)\
+            .filter(LinkType.gid != '004bd0c3-8a45-4309-ba52-fa99f3aa3d50')
+        )\
+        .order_by(LinkType.link_phrase)\
+        .distinct()
     return render_template("recording.html",
                            recording=rec,
                            covers=covers,
                            rec_licenses=rec_licenses,
                            rel_licenses=rel_licenses,
                            artist_perms=artist_perms,
-                           label_perms=label_perms)
+                           label_perms=label_perms,
+                           links=links,
+                           State=Beatmap.State)
 
 
-@bp.route("/beatmap/<sitename>/<extid>")
+@bp.route("/beatmap/<sitename>/<extid>", methods={'GET', 'POST'})
 def beatmap(sitename, extid):
     site = db.session.query(BeatSite).filter(
         BeatSite.short_name == sitename).one()
     bm = db.session.query(Beatmap).filter(
         Beatmap.external_site == site,
         Beatmap.external_id == extid).one()
+    if request.method == 'POST':
+        if 'action' not in request.form:
+            abort(400)
+        if request.form['action'] == 'rematch':
+            if bm.state != Beatmap.State.MATCHED_WITH_STRING:
+                abort(400)
+            bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
+        elif request.form['action'] == 'incorrect':
+            # TODO could be a vector for abuse
+            if bm.recording_gid is None:
+                abort(400)
+            bm.recording_gid = None
+        else:
+            abort(400)
+        db.session.commit()
     if bm.recording_gid is None:
-        return render_template("beatmap-standalone.html", beatmap=bm)
+        return render_template("beatmap-standalone.html", beatmap=bm, State=Beatmap.State)
     else:
         return redirect(url_for('main.recording', gid=bm.recording_gid))

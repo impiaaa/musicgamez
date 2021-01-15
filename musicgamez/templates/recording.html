@@ -40,6 +40,11 @@
 <a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ label.name }} has given permission for streaming (click for conditions)</a>
 </p>
 {% endfor %}
+{% for url, link_type in links %}
+<p>
+<a href="{{ url.url }}">{{ link_type.link_phrase }}</a>
+</p>
+{% endfor %}
 <table>
 {% for beatmap in recording.beatmaps %}
 {% include 'beatmap-row.html' %}
