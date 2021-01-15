@@ -40,6 +40,9 @@
 <a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ label.name }} has given permission for streaming (click for conditions)</a>
 </p>
 {% endfor %}
+{% if selfpublish %}
+<p><i class="fa fa-circle-thin" aria-hidden="true"></i> Not released under a label</p>
+{% endif %}
 {% for url, link_type in links %}
 <p>
 <a href="{{ url.url }}">{{ link_type.link_phrase }}</a>
