@@ -124,6 +124,7 @@ def create_app(test_config=None):
     app.cli.add_command(import_partybus_stream_permission)
     app.cli.add_command(import_creatorhype_stream_permission)
     app.cli.add_command(fetch_beatsaber_command)
+    app.cli.add_command(fetch_beastsaber_command)
     app.cli.add_command(fetch_beatsaber_single_command)
     app.cli.add_command(fetch_osu_command)
 
@@ -245,3 +246,16 @@ def fetch_beatsaber_single_command(id):
     except apscheduler.schedulers.SchedulerNotRunningError:
         pass
     match_with_string()
+
+@click.command("fetch-beastsaber")
+@with_appcontext
+def fetch_beastsaber_command():
+    scheduler.shutdown()
+    from musicgamez.main.tasks import fetch_beastsaber, match_with_string
+    fetch_beastsaber()
+    try:
+        scheduler.shutdown()
+    except apscheduler.schedulers.SchedulerNotRunningError:
+        pass
+    match_with_string()
+
