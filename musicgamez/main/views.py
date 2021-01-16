@@ -10,7 +10,8 @@ from mbdata.models import *
 from musicgamez import db, translate_artist
 from musicgamez.main.models import *
 import sqlalchemy
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, expression
+from urllib.parse import urlparse, urlunparse
 
 bp = Blueprint("main", __name__)
 
@@ -188,3 +189,33 @@ def beatmap(sitename, extid):
         return render_template("beatmap-standalone.html", beatmap=bm, State=Beatmap.State)
     else:
         return redirect(url_for('main.recording', gid=bm.recording_gid))
+
+
+@bp.route("/lookup", methods={'GET', 'POST'})
+def lookup():
+    if request.method == 'POST':
+        if 'exturl' in request.form:
+            exturl = urlunparse(urlparse(request.form['exturl'])._replace(fragment=''))
+            site = db.session.query(BeatSite)\
+                .filter(expression.literal(exturl)\
+                    .like(BeatSite.url_base+'%'+BeatSite.url_suffix)
+                )\
+                .one()
+            sitename = site.short_name
+            if len(site.url_suffix) == 0:
+                extid = exturl[len(site.url_base):]
+            else:
+                extid = exturl[len(site.url_base):-len(site.url_suffix)]
+        elif 'sitename' in request.form and 'extid' in request.form:
+            sitename = request.form['sitename']
+            extid = request.form['extid']
+        else:
+            abort(400)
+        return redirect(url_for('main.beatmap', sitename=sitename, extid=extid))
+    elif request.method == 'GET':
+        return render_template("lookup.html", beatsites=db.session.query(BeatSite))
+
+
+@bp.route("/coffee", methods={'BREW', 'POST'})
+def coffee():
+    abort(418)

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}: Lookup{% endblock %}
+{% block content %}
+<form action="{{ url_for(request.endpoint) }}" method="post">
+<select id="sitename" name="sitename">
+{% for site in beatsites %}
+<option value="{{ site.short_name }}">{{ site.name }}</option>
+{% endfor %}
+</select>
+<input type="text" id="extid" name="extid" placeholder="Unique ID" />
+<button type="submit">Look up by ID</button>
+</form>
+<p>OR</p>
+<form action="{{ url_for(request.endpoint) }}" method="post">
+<input type="url" id="exturl" name="exturl" placeholder="http://beatsite.com/id" />
+<button type="submit">Look up by URL</button>
+</form>
+{% endblock %}
+
