@@ -28,8 +28,11 @@ def urlopen_with_ua(u, **kwargs):
     return urlopen(Request(u, headers=headers, **kwargs))
 
 
-def fetch_beatsaber_single(session, gametrack):
-    site = session.query(BeatSite).filter(BeatSite.short_name == 'bs').one()
+def fetch_beatsaber_single(site, session, gametrack_or_id):
+    if isinstance(gametrack_or_id, str):
+        gametrack = json.load(urlopen_with_ua("https://beatsaver.com/api/maps/detail/" + gametrack_or_id))
+    else:
+        gametrack = gametrack_or_id
     meta = gametrack['metadata']
     songName = meta['songName']
     mapperName = meta['levelAuthorName']
@@ -81,12 +84,8 @@ def fetch_beastsaber():
                 if q.count() > 0:
                     lastPage = True
                     break
-                gametrack = json.load(
-                    urlopen_with_ua(
-                        "https://beatsaver.com/api/maps/detail/" +
-                        id))
-                time.sleep(1)
-                if fetch_beatsaber_single(session, gametrack) is not None:
+                
+                if fetch_beatsaber_single(site, session, id) is not None:
                     imported += 1
             if lastPage:
                 break
@@ -114,7 +113,7 @@ def fetch_beatsaber():
 
             lastPage = False
             for gametrack in response['docs']:
-                if fetch_beatsaber_single(session, gametrack) is None:
+                if fetch_beatsaber_single(site, session, gametrack) is None:
                     lastPage = True
                     break
                 imported += 1
@@ -128,6 +127,46 @@ def fetch_beatsaber():
         session.remove()
 
 
+def osu_auth():
+    token = json.load(
+        urlopen_with_ua(
+            "https://osu.ppy.sh/oauth/token",
+            data=urlencode(
+                {
+                    "client_id": db.app.config["OSU_CLIENT_ID"],
+                    "client_secret": db.app.config["OSU_CLIENT_SECRET"],
+                    "grant_type": "client_credentials",
+                    "scope": "public"}).encode()))["access_token"]
+    return {"Authorization": "Bearer {}".format(token)}
+
+
+def fetch_osu_single(site, session, gametrack_or_id, headers=None):
+    if headers is None:
+        headers = osu_auth()
+    if isinstance(gametrack_or_id, str):
+        gametrack = json.load(urlopen_with_ua("https://osu.ppy.sh/api/v2/beatmapsets/"+gametrack_or_id, headers=headers))
+        extId = gametrack_or_id
+    else:
+        gametrack = gametrack_or_id
+        extId = str(gametrack['id'])
+    q = session.query(Beatmap).filter(Beatmap.external_site == site,
+                                      Beatmap.external_id == extId)
+    if q.count() > 0:
+        return
+
+    bm = Beatmap(artist=gametrack['artist_unicode'],
+                 title=gametrack['title_unicode'],
+                 external_id=extId,
+                 external_site=site,
+                 choreographer=gametrack['creator'],
+                 date=gametrack['submitted_date'])
+
+    session.add(bm)
+    session.commit()
+    
+    return bm
+
+
 @scheduler.task('interval', id='fetch_osu', hours=1, jitter=60)
 def fetch_osu():
     with db.app.app_context():
@@ -137,15 +176,7 @@ def fetch_osu():
         site = session.query(BeatSite).filter(
             BeatSite.short_name == 'osu').one()
 
-        token = json.load(
-            urlopen_with_ua(
-                "https://osu.ppy.sh/oauth/token",
-                data=urlencode(
-                    {
-                        "client_id": db.app.config["OSU_CLIENT_ID"],
-                        "client_secret": db.app.config["OSU_CLIENT_SECRET"],
-                        "grant_type": "client_credentials",
-                        "scope": "public"}).encode()))["access_token"]
+        headers = osu_auth()
 
         cursor = {}
         for page in range(1):
@@ -153,34 +184,26 @@ def fetch_osu():
                 urlopen_with_ua(
                     "https://osu.ppy.sh/api/v2/beatmapsets/search?sort=updated_desc&s=any&" +
                     urlencode(cursor),
-                    headers={
-                        "Authorization": "Bearer {}".format(token)}))
+                    headers=headers))
             cursor = {
                 "cursor[{}]".format(k): v for k,
                 v in response['cursor'].items()}
 
             for gametrack in response['beatmapsets']:
-                extId = str(gametrack['id'])
-                q = session.query(Beatmap).filter(Beatmap.external_site == site,
-                                                  Beatmap.external_id == extId)
-                if q.count() > 0:
-                    continue
-
-                bm = Beatmap(artist=gametrack['artist_unicode'],
-                             title=gametrack['title_unicode'],
-                             external_id=extId,
-                             external_site=site,
-                             choreographer=gametrack['creator'],
-                             date=gametrack['submitted_date'])
-
-                session.add(bm)
-                session.commit()
-                imported += 1
+                if fetch_osu_single(site, session, gametrack, headers) is not None:
+                    imported += 1
 
         db.app.logger.info(
             "Imported {} beatmaps for {}".format(
                 imported, site.name))
         session.remove()
+
+
+def fetch_single(site, session, gametrack_or_id):
+    return {
+        'bs': fetch_beatsaber_single,
+        'osu': fetch_osu_single
+    }[site.short_name](site, session, gametrack_or_id)
 
 
 def import_partybus_stream_permission():

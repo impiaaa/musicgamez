@@ -21,7 +21,7 @@ perpage = 36
 def recordinglist(q, page, pagetitle=None):
     if pagetitle is None:
         pagetitle = request.endpoint.split('.')[-1].title()
-    result = q.paginate(page, perpage, True)
+    result = q.order_by(MiniRecordingView.date.desc()).paginate(page, perpage, True)
     return render_template("recordinglist.html", recordings=result.items,
         has_next=result.has_next, has_prev=result.has_prev,
         next_num=result.next_num, prev_num=result.prev_num, pagetitle=pagetitle)
@@ -167,9 +167,20 @@ def recording(gid):
 def beatmap(sitename, extid):
     site = db.session.query(BeatSite).filter(
         BeatSite.short_name == sitename).one()
-    bm = db.session.query(Beatmap).filter(
-        Beatmap.external_site == site,
-        Beatmap.external_id == extid).one()
+    try:
+        bm = db.session.query(Beatmap).filter(
+            Beatmap.external_site == site,
+            Beatmap.external_id == extid).one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        from musicgamez.main.tasks import fetch_single
+        from urllib.error import URLError
+        bm = None
+        try:
+            bm = fetch_single(site, db.session, extid)
+        except URLError:
+            pass
+        if bm is None:
+            raise
     if request.method == 'POST':
         if 'action' not in request.form:
             abort(400)

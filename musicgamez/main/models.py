@@ -188,14 +188,14 @@ class MiniRecordingView(db.Model):
                         )
                         .where(Track.recording_id == Recording.id)
                     )
-                ).label("selfpublish")
+                ).label("selfpublish"),
+                func.max(Beatmap.date).label("date")
             ]
         )
         .select_from(Recording.__table__.join(Beatmap))
         .group_by(
             Recording.id, Recording.gid, Recording.name, Recording.artist_credit_id
-        )
-        .order_by(func.max(Beatmap.date).desc()),
+        ),
     )
     artist_credit = db.relationship(ArtistCredit)
     beatmaps = db.relationship(Beatmap)
