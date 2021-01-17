@@ -278,14 +278,14 @@ def import_creatorhype_stream_permission():
     db.session.commit()
 
 
-@scheduler.task('interval', id='match_with_string', seconds=60)
+@scheduler.task('interval', id='match_with_string', seconds=10)
 def match_with_string():
     with db.app.app_context():
         matched = 0
         session = db.create_scoped_session()
         total = 0
         for bm in session.query(Beatmap).filter(
-                Beatmap.state == Beatmap.State.INITIAL):
+                Beatmap.state == Beatmap.State.INITIAL).limit(10):
             # TODO use normalize(nfkc) once on PosgreSQL 13
             # TODO use aliases
             q = session.query(Recording).filter(func.lower(Recording.name, type_=db.String) == bm.title.lower(),
@@ -309,8 +309,8 @@ def match_with_string():
         s = "Matched {} beatmaps using string".format(matched)
         if matched > 0:
             db.app.logger.info(s)
-        else:
-            db.app.logger.debug(s)
+        #else:
+            #db.app.logger.debug(s)
 
 
 def zipopen_lower(z, fname):
@@ -320,7 +320,7 @@ def zipopen_lower(z, fname):
     return z.open(fname)
 
 
-@scheduler.task('interval', id='generate_fingerprint', minutes=3)
+@scheduler.task('interval', id='generate_fingerprint', minutes=1)
 def generate_fingerprint():
     with db.app.app_context():
         session = db.create_scoped_session()
@@ -392,7 +392,7 @@ def generate_fingerprint():
         session.remove()
 
 
-@scheduler.task('interval', id='lookup_fingerprint', minutes=3)
+@scheduler.task('interval', id='lookup_fingerprint', minutes=1)
 def lookup_fingerprint():
     with db.app.app_context():
         session = db.create_scoped_session()

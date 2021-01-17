@@ -2,10 +2,9 @@ import enum
 from mbdata.models import *
 from musicgamez import db
 from musicgamez.views import view
-from sqlalchemy import event, select, all_
+from sqlalchemy import event, select
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql.expression import subquery
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, expression
 
 
 class BeatSite(db.Model):
@@ -179,15 +178,21 @@ class MiniRecordingView(db.Model):
                     .order_by(func.random())
                     .limit(1)
                     .label("cover_id"),
-                (
-                    "157afde4-4bf5-4039-8ad2-5a15acc85176"
-                    == all_(
-                        select([Label.gid])
-                        .select_from(
-                            Label.__table__.join(ReleaseLabel).join(Release).join(Medium).join(Track)
+                select(
+                    [
+                        "157afde4-4bf5-4039-8ad2-5a15acc85176"
+                        == expression.all_(
+                            select([Label.gid])
+                            .select_from(
+                                Track.__table__
+                                .join(Medium)
+                                .join(Release)
+                                .outerjoin(ReleaseLabel)
+                                .outerjoin(Label)
+                            )
+                            .where(Track.recording_id == expression.text("musicbrainz.recording.id"))
                         )
-                        .where(Track.recording_id == Recording.id)
-                    )
+                    ]
                 ).label("selfpublish"),
                 func.max(Beatmap.date).label("date")
             ]

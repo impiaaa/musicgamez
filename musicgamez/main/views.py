@@ -141,16 +141,14 @@ def recording(gid):
         )\
         .order_by(LinkType.link_phrase)\
         .distinct()
-    selfpublish = db.session.query("157afde4-4bf5-4039-8ad2-5a15acc85176"
-                    == func.all_(
-                        db.session.query(Label.gid)
-                        .select_from(Label)
-                        .join(ReleaseLabel)
-                        .join(Release)
-                        .join(Medium)
-                        .join(Track)
-                        .filter(Track.recording == rec)
-                    ))
+    selfpublish = db.session.query("157afde4-4bf5-4039-8ad2-5a15acc85176" == expression.all_(db.session.query(Label.gid)\
+                        .select_from(Track)\
+                        .join(Medium)\
+                        .join(Release)\
+                        .outerjoin(ReleaseLabel)\
+                        .outerjoin(Label)\
+                        .filter(Track.recording == rec).subquery())).one_or_none()
+    selfpublish = False if selfpublish is None else selfpublish[0]
     return render_template("recording.html",
                            recording=rec,
                            covers=covers,
