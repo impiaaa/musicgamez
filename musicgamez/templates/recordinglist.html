@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}: {{ pagetitle }}{% endblock %}
 {% block content %}
-<h2>{{ pagetitle }}</h2>
+<h2>{% if pagelink %}<a href="{{ pagelink }}">{{ pagetitle }}</a>{% else %}{{ pagetitle }}{% endif %}</h2>
 <ul class="recordinglist">
 {% for recording in recordings %}
 <li {% if recording.cover_id %}style="background-image:linear-gradient(rgba(0,0,0,.5),transparent,rgba(0,0,0,.5)),url(//coverartarchive.org/release/{{ recording.cover_id }}-250.jpg)"{% endif %}

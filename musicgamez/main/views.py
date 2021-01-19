@@ -19,11 +19,12 @@ bp = Blueprint("main", __name__)
 perpage = 36
 
 
-def recordinglist(q, page, pagetitle):
+def recordinglist(q, page, pagetitle, pagelink=None):
     result = q.order_by(MiniRecordingView.date.desc()).paginate(page, perpage, True)
     return render_template("recordinglist.html", recordings=result.items,
         has_next=result.has_next, has_prev=result.has_prev,
-        next_num=result.next_num, prev_num=result.prev_num, pagetitle=pagetitle)
+        next_num=result.next_num, prev_num=result.prev_num,
+        pagetitle=pagetitle, pagelink=pagelink)
 
 
 @bp.route("/")
@@ -62,7 +63,9 @@ def tag(tag, page=1):
                          .join(Release)
                          .join(ReleaseTag)
                          .join(Tag)
-                         .filter(Tag.name == tag), page, tag)
+                         .filter(Tag.name == tag),
+                         page, tag,
+                         "https://musicbrainz.org/tag/"+tag)
 
 
 @bp.route("/artist/<uuid:gid>", defaults={ "page": 1})
@@ -72,7 +75,9 @@ def artist(gid, page=1):
     return recordinglist(db.session.query(MiniRecordingView)
                          .join(ArtistCredit)
                          .join(ArtistCreditName)
-                         .filter(ArtistCreditName.artist == a), page, translate_artist(a))
+                         .filter(ArtistCreditName.artist == a), page,
+                         translate_artist(a),
+                         "https://musicbrainz.org/artist/"+str(gid))
 
 
 @bp.route("/recording/<uuid:gid>")
