@@ -4,6 +4,7 @@ from flask import g
 from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
 from flask import url_for
 from math import ceil
 from mbdata.models import *
@@ -20,16 +21,35 @@ perpage = 36
 
 
 def recordinglist(q, page, pagetitle, pagelink=None):
+    if request.method == "POST":
+        if "game" in request.form:
+            if request.form["game"] == "":
+                if "game" in session:
+                    del session["game"]
+            else:
+                session["game"] = request.form["game"]
+        session["streamsafe"] = bool(request.form.get("streamsafe", False))
+    if session.get("streamsafe", False):
+        q = q.filter(expression.or_(MiniRecordingView.license_url != None,
+            MiniRecordingView.permission_url != None,
+            MiniRecordingView.selfpublish))
+    if session.get("game", False):
+        site = db.session.query(BeatSite).filter(BeatSite.short_name==session["game"]).one_or_none()
+        if site is None:
+            del session["game"]
+        else:
+            q = q.join(Beatmap).filter(Beatmap.external_site==site)
     result = q.order_by(MiniRecordingView.date.desc()).paginate(page, perpage, True)
     return render_template("recordinglist.html", recordings=result.items,
         has_next=result.has_next, has_prev=result.has_prev,
         next_num=result.next_num, prev_num=result.prev_num,
-        pagetitle=pagetitle, pagelink=pagelink)
+        pagetitle=pagetitle, pagelink=pagelink,
+        games=db.session.query(BeatSite))
 
 
-@bp.route("/")
-@bp.route("/latest", defaults={"page": 1})
-@bp.route("/latest/<int:page>")
+@bp.route("/", methods={'GET', 'POST'})
+@bp.route("/latest", defaults={"page": 1}, methods={'GET', 'POST'})
+@bp.route("/latest/<int:page>", methods={'GET', 'POST'})
 def latest(page=1):
     return recordinglist(db.session.query(MiniRecordingView), page, _("Latest"))
 
@@ -54,8 +74,8 @@ def genres():
     return render_template("genres.html", genres=h)
 
 
-@bp.route("/tag/<tag>", defaults={ "page": 1})
-@bp.route("/tag/<tag>/<int:page>")
+@bp.route("/tag/<tag>", defaults={ "page": 1}, methods={'GET', 'POST'})
+@bp.route("/tag/<tag>/<int:page>", methods={'GET', 'POST'})
 def tag(tag, page=1):
     return recordinglist(db.session.query(MiniRecordingView)
                          .join(Track)
@@ -68,8 +88,8 @@ def tag(tag, page=1):
                          "https://musicbrainz.org/tag/"+tag)
 
 
-@bp.route("/artist/<uuid:gid>", defaults={ "page": 1})
-@bp.route("/artist/<uuid:gid>/<int:page>")
+@bp.route("/artist/<uuid:gid>", defaults={ "page": 1}, methods={'GET', 'POST'})
+@bp.route("/artist/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
 def artist(gid, page=1):
     a = db.session.query(Artist).filter(Artist.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)

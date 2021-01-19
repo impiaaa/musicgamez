@@ -1,6 +1,18 @@
 {% extends 'base.html' %}
 {% block title %}: {{ pagetitle }}{% endblock %}
 {% block content %}
+<form class="filters" action="{{ url_for(request.endpoint, **request.view_args) }}" method="post">
+<input type="checkbox" name="streamsafe" title="{{ _("Only show stream-safe music") }}" onchange="javascript:this.form.submit()" {% if session.get("streamsafe", False) %}checked{% endif %}/><label for="streamsafe" title="{{ _("Only show stream-safe music") }}"><i class="fa fa-television" aria-hidden="true"></i></label>
+<select name="game" title="{{ _("Game filter") }}" onchange="javascript:this.form.submit()">
+<option value="" {% if not session["game"] %}selected{% endif %}></option>
+{% for game in games %}
+<option value="{{ game.short_name }}" {% if session.get("game", None)==game.short_name %}selected{% endif %}>{{ game.name }}</option>
+{% endfor %}
+</select>
+<noscript>
+<button type="submit">{{ _("Submit") }}</button>
+</noscript>
+</form>
 <h2>{% if pagelink %}<a href="{{ pagelink }}">{{ pagetitle }}</a>{% else %}{{ pagetitle }}{% endif %}</h2>
 <ul class="recordinglist">
 {% for recording in recordings %}
