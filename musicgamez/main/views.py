@@ -12,15 +12,14 @@ from musicgamez.main.models import *
 import sqlalchemy
 from sqlalchemy.sql import func, expression
 from urllib.parse import urlparse, urlunparse
+from flask_babel import _
 
 bp = Blueprint("main", __name__)
 
 perpage = 36
 
 
-def recordinglist(q, page, pagetitle=None):
-    if pagetitle is None:
-        pagetitle = request.endpoint.split('.')[-1].title()
+def recordinglist(q, page, pagetitle):
     result = q.order_by(MiniRecordingView.date.desc()).paginate(page, perpage, True)
     return render_template("recordinglist.html", recordings=result.items,
         has_next=result.has_next, has_prev=result.has_prev,
@@ -31,7 +30,7 @@ def recordinglist(q, page, pagetitle=None):
 @bp.route("/latest", defaults={"page": 1})
 @bp.route("/latest/<int:page>")
 def latest(page=1):
-    return recordinglist(db.session.query(MiniRecordingView), page)
+    return recordinglist(db.session.query(MiniRecordingView), page, _("Latest"))
 
 
 @bp.route("/browse/genre")

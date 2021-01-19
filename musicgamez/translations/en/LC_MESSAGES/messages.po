@@ -1,0 +1,24 @@
+msgid "State.ERROR"
+msgstr "Error"
+
+msgid "State.INITIAL"
+msgstr "Processing"
+
+msgid "State.MATCHED_WITH_STRING"
+msgstr "Matched"
+
+msgid "State.WAITING_FOR_FINGERPRINT"
+msgstr "Processing"
+
+msgid "State.HAS_FINGERPRINT"
+msgstr "Processing"
+
+msgid "State.MATCHED_WITH_FINGERPRINT"
+msgstr "Matched (confident)"
+
+msgid "State.TOO_MANY_MATCHES"
+msgstr "Too many possible matches"
+
+msgid "State.NO_MATCH"
+msgstr "No matches found"
+

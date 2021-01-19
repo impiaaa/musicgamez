@@ -38,6 +38,7 @@ from sqlalchemy import orm, event
 from sqlalchemy.pool import NullPool
 from sqlalchemy.schema import MetaData
 from werkzeug.exceptions import HTTPException
+from flask_babel import _
 
 
 metadata = MetaData(schema='public')
@@ -53,7 +54,7 @@ def render_error(e):
 
 def entity_not_found(e):
     return render_template('error.html', name="Not Found", code=404,
-                           description="The requested entity was not found. If you entered the URL manually please check your spelling and try again."), 404
+                           description=_("The requested entity was not found. If you entered the URL manually please check your spelling and try again.")), 404
 
 
 def create_app(test_config=None):

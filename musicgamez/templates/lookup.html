@@ -8,12 +8,12 @@
 {% endfor %}
 </select>
 <input type="text" id="extid" name="extid" placeholder="Unique ID" />
-<button type="submit">Look up by ID</button>
+<button type="submit">{{ _("Look up by ID") }}</button>
 </form>
-<p>OR</p>
+<p>{{ _("OR") }}</p>
 <form action="{{ url_for(request.endpoint) }}" method="post">
 <input type="url" id="exturl" name="exturl" placeholder="http://beatsite.com/id" />
-<button type="submit">Look up by URL</button>
+<button type="submit">{{ _("Look up by URL") }}</button>
 </form>
 {% endblock %}
 

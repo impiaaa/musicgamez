@@ -11,19 +11,19 @@
 <nav>
 <h1><a href="/">MusicGamez</a></h1>
 <ul class="fa-ul">
-<li><i class="fa-li fa fa-book" aria-hidden="true"></i>Browse
+<li><i class="fa-li fa fa-book" aria-hidden="true"></i>{{ _("Browse") }}
 <ul>
-<li><a href="/browse/artist">Artist</a></li>
-<li><a href="{{ url_for('main.genres') }}">Genre</a></li>
+<li><a href="/browse/artist">{{ _("Artist") }}</a></li>
+<li><a href="{{ url_for('main.genres') }}">{{ _("Genre") }}</a></li>
 </ul>
 </li>
-<li><i class="fa-li fa fa-wrench" aria-hidden="true"></i>Tools
+<li><i class="fa-li fa fa-wrench" aria-hidden="true"></i>{{ _("Tools") }}
 <ul>
-<li><a href="/collection">My Collection</a></li>
-<li><a href="/lookup">Lookup</a></li>
+<li><a href="/collection">{{ _("My Collection") }}</a></li>
+<li><a href="{{ url_for('main.lookup') }}">{{ _("Lookup") }}</a></li>
 </ul>
 </li>
-<li><a href="/about"><i class="fa-li fa fa-info-circle" aria-hidden="true"></i>About/Help</a></li>
+<li><a href="/about"><i class="fa-li fa fa-info-circle" aria-hidden="true"></i>{{ _("About/Help") }}</a></li>
 </ul>
 </nav>
 <div>
@@ -34,6 +34,9 @@
 <main>
 {% block content %}{% endblock %}
 </main>
+<footer>
+<p>{{ _('Music metadata by <a href="https://musicbrainz.org/">MusicBrainz</a> contributors is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">CC BY-NC-SA 3.0</a>') }}</p>
+</footer>
 </body>
 </html>
 

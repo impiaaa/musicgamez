@@ -12,9 +12,9 @@
 <p>
 <a href="{{ rec_license.url }}">
 {% if rec_license.url.startswith("https://creativecommons.org/licenses/") or rec_license.url.startswith("https://creativecommons.org/publicdomain/") %}
-<i class="fa fa-creative-commons" aria-hidden="true"></i>Recording licensed under Creative Commons (click for terms)
+<i class="fa fa-creative-commons" aria-hidden="true"></i> {{ _("Recording licensed under Creative Commons (click for terms)") }}
 {% else %}
-<i class="fa fa-file-text-o" aria-hidden="true"></i>Recording available for licensing (click for terms)
+<i class="fa fa-file-text-o" aria-hidden="true"></i> {{ _("Recording available for licensing (click for terms)") }}
 {% endif %}
 </a>
 </p>
@@ -23,25 +23,25 @@
 <p>
 <a href="{{ url.url }}">
 {% if url.url.startswith("https://creativecommons.org/licenses/") or url.url.startswith("https://creativecommons.org/publicdomain/") %}
-<i class="fa fa-creative-commons" aria-hidden="true"></i> Release "{{ release.name }}" licensed under Creative Commons (click for terms)
+<i class="fa fa-creative-commons" aria-hidden="true"></i> {{ _('Release "%(releasename)s" licensed under Creative Commons (click for terms)', releasename=release.name) }}
 {% else %}
-<i class="fa fa-file-text-o" aria-hidden="true"></i> Release "{{ release.name }}" available for licensing (click for terms)
+<i class="fa fa-file-text-o" aria-hidden="true"></i> {{ _('Release "%(releasename)s" available for licensing (click for terms)', releasename=release.name) }}
 {% endif %}
 </a>
 </p>
 {% endfor %}
 {% for artist, url in artist_perms %}
 <p>
-<a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ artist|translate_artist }} has given permission for streaming (click for conditions)</a>
+<a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ _("%(artist)s has given permission for streaming (click for conditions)", artist=artist|translate_artist) }}</a>
 </p>
 {% endfor %}
 {% for release, label, url in label_perms %}
 <p>
-<a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ label.name }} has given permission for streaming (click for conditions)</a>
+<a href="{{ url.url }}"><i class="fa fa-television" aria-hidden="true"></i> {{ _("%(label)s has given permission for streaming (click for conditions)", label=label.name) }}</a>
 </p>
 {% endfor %}
 {% if selfpublish %}
-<p><i class="fa fa-circle-thin" aria-hidden="true"></i> Not released under a label</p>
+<p><i class="fa fa-circle-thin" aria-hidden="true"></i> {{ _("Not released under a label") }}</p>
 {% endif %}
 {% for url, link_type in links %}
 <p>
