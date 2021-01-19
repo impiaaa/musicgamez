@@ -16,15 +16,19 @@
 <button type="submit">{{ _("Look up by URL") }}</button>
 </form>
 <script>
+var idform = document.forms["idform"];
+function idToUrl(event) {
+    event.preventDefault();
+    window.location = "/beatmap/"+idform["sitename"].value+"/"+idform["extid"].value;
+}
+idform.addEventListener("submit", idToUrl);
 var sites = [
-{% for site in beatsites %}
-["{{ site.short_name }}", "{{ site.url_base }}", "{{ site.url_suffix }}"],
-{% endfor %}
+    {% for site in beatsites %}
+    ["{{ site.short_name }}", "{{ site.url_base }}", "{{ site.url_suffix }}"],
+    {% endfor %}
 ];
 var urlform = document.forms["urlform"];
-var idform = document.forms["idform"];
 function urlToId(event) {
-    event.preventDefault();
     var url = new URL(urlform["exturl"].value);
     url.hash = "";
     urlStr = url.toString();
@@ -34,7 +38,7 @@ function urlToId(event) {
             idform["sitename"].value = sites[i][0];
             idform["extid"].value = urlStr.substr(sites[i][1].length, urlStr.length-sites[i][1].length-sites[i][2].length);
             urlform["exturl"].value = "";
-            idform.submit();
+            idToUrl(event);
         }
     }
 }

@@ -463,7 +463,7 @@ def lookup_fingerprint():
         session.remove()
 
 
-@scheduler.task('cron', id='mbsync', minute=2, jitter=60)
+@scheduler.task('cron', id='mbsync', minute=2, second=0, jitter=60)
 def mbsync():
     config_paths = [os.path.join(db.app.instance_path, "mbslave.conf")]
     if "MBSLAVE_CONFIG" in os.environ:
