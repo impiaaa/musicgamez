@@ -5,6 +5,7 @@ from musicgamez.views import view
 from sqlalchemy import event, select
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func, expression
+from sqlalchemy.orm import backref
 
 
 class BeatSite(db.Model):
@@ -62,7 +63,7 @@ class Beatmap(db.Model):
     fingerprint = db.Column(db.String)
     track_id = db.Column(UUID)
     recording_gid = db.Column(UUID, db.ForeignKey(Recording.gid))
-    recording = db.relationship(Recording, backref='beatmaps')
+    recording = db.relationship(Recording, backref=backref('beatmaps', order_by=date))
 
     def validate_state(self):
         if self.state == self.State.INITIAL:

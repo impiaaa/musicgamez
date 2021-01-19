@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}: Lookup{% endblock %}
 {% block content %}
-<form action="{{ url_for(request.endpoint) }}" method="post">
+<form action="{{ url_for(request.endpoint) }}" method="post" id="idform">
 <select id="sitename" name="sitename">
 {% for site in beatsites %}
 <option value="{{ site.short_name }}">{{ site.name }}</option>
@@ -11,9 +11,34 @@
 <button type="submit">{{ _("Look up by ID") }}</button>
 </form>
 <p>{{ _("OR") }}</p>
-<form action="{{ url_for(request.endpoint) }}" method="post">
+<form action="{{ url_for(request.endpoint) }}" method="post" id="urlform">
 <input type="url" id="exturl" name="exturl" placeholder="http://beatsite.com/id" />
 <button type="submit">{{ _("Look up by URL") }}</button>
 </form>
+<script>
+var sites = [
+{% for site in beatsites %}
+["{{ site.short_name }}", "{{ site.url_base }}", "{{ site.url_suffix }}"],
+{% endfor %}
+];
+var urlform = document.forms["urlform"];
+var idform = document.forms["idform"];
+function urlToId(event) {
+    event.preventDefault();
+    var url = new URL(urlform["exturl"].value);
+    url.hash = "";
+    urlStr = url.toString();
+    urlform["exturl"].value = urlStr;
+    for (i = 0; i < sites.length; i++) {
+        if (urlStr.startsWith(sites[i][1]) && urlStr.endsWith(sites[i][2])) {
+            idform["sitename"].value = sites[i][0];
+            idform["extid"].value = urlStr.substr(sites[i][1].length, urlStr.length-sites[i][1].length-sites[i][2].length);
+            urlform["exturl"].value = "";
+            idform.submit();
+        }
+    }
+}
+urlform.addEventListener("submit", urlToId);
+</script>
 {% endblock %}
 
