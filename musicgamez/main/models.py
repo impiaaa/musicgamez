@@ -54,6 +54,7 @@ class Beatmap(db.Model):
     i = db.Index('external_ref', external_id, external_site_id, unique=True)
     choreographer = db.Column(db.String)
     date = db.Column(db.DateTime)
+    extra = db.Column(db.JSON)
 
     state = db.Column(db.Enum(State), default=State.INITIAL)
     last_checked = db.Column(db.DateTime, server_default=func.now())

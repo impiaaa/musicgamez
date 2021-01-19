@@ -51,7 +51,8 @@ def fetch_beatsaber_single(site, session, gametrack_or_id):
                  external_id=gametrack['key'],
                  external_site=site,
                  choreographer=mapperName,
-                 date=gametrack['uploaded'])
+                 date=gametrack['uploaded'],
+                 extra=gametrack)
 
     session.add(bm)
     session.commit()
@@ -159,7 +160,8 @@ def fetch_osu_single(site, session, gametrack_or_id, headers=None):
                  external_id=extId,
                  external_site=site,
                  choreographer=gametrack['creator'],
-                 date=gametrack['submitted_date'])
+                 date=gametrack['submitted_date'],
+                 extra=gametrack)
 
     session.add(bm)
     session.commit()
