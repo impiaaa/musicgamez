@@ -44,10 +44,10 @@ class Beatmap(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    artist = db.Column(db.String)
-    title = db.Column(db.String)
+    artist = db.Column(db.String, nullable=False)
+    title = db.Column(db.String, nullable=False)
 
-    external_id = db.Column(db.String(255))
+    external_id = db.Column(db.String(255), nullable=False)
     external_site_id = db.Column(
         db.Integer, db.ForeignKey(
             BeatSite.id), nullable=False)
@@ -57,8 +57,8 @@ class Beatmap(db.Model):
     date = db.Column(db.DateTime)
     extra = db.Column(db.JSON)
 
-    state = db.Column(db.Enum(State), default=State.INITIAL)
-    last_checked = db.Column(db.DateTime, server_default=func.now())
+    state = db.Column(db.Enum(State), default=State.INITIAL, nullable=False)
+    last_checked = db.Column(db.DateTime, server_default=func.now(), nullable=False)
     duration = db.Column(db.Float)
     fingerprint = db.Column(db.String)
     track_id = db.Column(UUID)
