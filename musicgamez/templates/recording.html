@@ -45,9 +45,12 @@
 {% endif %}
 {% for url, link_type in links %}
 <p>
-<a href="{{ url.url }}">{{ link_type.link_phrase }}</a>
+<a href="{{ url.url }}">{{ link_type|translate_relationship }}</a>
 </p>
 {% endfor %}
+<script>
+var fmt = new Intl.DateTimeFormat('{{ get_locale().language }}', {dateStyle: "medium", timeStyle: "medium"});
+</script>
 <table>
 {% for beatmap in recording.beatmaps %}
 {% include 'beatmap-row.html' %}

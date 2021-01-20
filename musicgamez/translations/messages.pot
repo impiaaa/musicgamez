@@ -1,0 +1,176 @@
+# Translations template for MusicGamez.
+# Copyright (C) 2021 ORGANIZATION
+# This file is distributed under the same license as the MusicGamez project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: MusicGamez VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2021-01-18 18:22-0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: musicgamez/__init__.py:57
+msgid ""
+"The requested entity was not found. If you entered the URL manually "
+"please check your spelling and try again."
+msgstr ""
+
+#: musicgamez/main/views.py:33
+msgid "Latest"
+msgstr ""
+
+#: musicgamez/templates/base.html:14
+msgid "Browse"
+msgstr ""
+
+#: musicgamez/templates/base.html:16
+msgid "Artist"
+msgstr ""
+
+#: musicgamez/templates/base.html:17
+msgid "Genre"
+msgstr ""
+
+#: musicgamez/templates/base.html:20
+msgid "Tools"
+msgstr ""
+
+#: musicgamez/templates/base.html:22
+msgid "My Collection"
+msgstr ""
+
+#: musicgamez/templates/base.html:23
+msgid "Lookup"
+msgstr ""
+
+#: musicgamez/templates/base.html:26
+msgid "About/Help"
+msgstr ""
+
+#: musicgamez/templates/base.html:38
+msgid ""
+"Music metadata by <a href=\"https://musicbrainz.org/\">MusicBrainz</a> "
+"contributors is licensed under <a "
+"href=\"https://creativecommons.org/licenses/by-nc-sa/3.0/\">CC BY-NC-SA "
+"3.0</a>"
+msgstr ""
+
+#: musicgamez/templates/beatmap-row.html:9
+msgid "Request re-match"
+msgstr ""
+
+#: musicgamez/templates/beatmap-row.html:12
+msgid "Report incorrect match"
+msgstr ""
+
+#: musicgamez/templates/genres.html:4
+msgid "Genres"
+msgstr ""
+
+#: musicgamez/templates/lookup.html:11
+msgid "Look up by ID"
+msgstr ""
+
+#: musicgamez/templates/lookup.html:13
+msgid "OR"
+msgstr ""
+
+#: musicgamez/templates/lookup.html:16
+msgid "Look up by URL"
+msgstr ""
+
+#: musicgamez/templates/recording.html:15
+msgid "Recording licensed under Creative Commons (click for terms)"
+msgstr ""
+
+#: musicgamez/templates/recording.html:17
+msgid "Recording available for licensing (click for terms)"
+msgstr ""
+
+#: musicgamez/templates/recording.html:26
+#, python-format
+msgid ""
+"Release \"%(releasename)s\" licensed under Creative Commons (click for "
+"terms)"
+msgstr ""
+
+#: musicgamez/templates/recording.html:28
+#, python-format
+msgid "Release \"%(releasename)s\" available for licensing (click for terms)"
+msgstr ""
+
+#: musicgamez/templates/recording.html:35
+#, python-format
+msgid "%(artist)s has given permission for streaming (click for conditions)"
+msgstr ""
+
+#: musicgamez/templates/recording.html:40
+#, python-format
+msgid "%(label)s has given permission for streaming (click for conditions)"
+msgstr ""
+
+#: musicgamez/templates/recording.html:44
+msgid "Not released under a label"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:12
+msgid "Licensed under Creative Commons (click for terms)"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:14
+msgid "Available for licensing (click for terms)"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:17
+msgid "Artist or label has given permission for streaming (click for conditions)"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:19
+msgid "Not published under a label"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:25
+#, python-format
+msgid "Mapped for %(game)s by %(choreographer)s"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:34
+msgid "Later"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:37
+msgid "Earlier"
+msgstr ""
+
+msgid "State.ERROR"
+msgstr ""
+
+msgid "State.INITIAL"
+msgstr ""
+
+msgid "State.MATCHED_WITH_STRING"
+msgstr ""
+
+msgid "State.WAITING_FOR_FINGERPRINT"
+msgstr ""
+
+msgid "State.HAS_FINGERPRINT"
+msgstr ""
+
+msgid "State.MATCHED_WITH_FINGERPRINT"
+msgstr ""
+
+msgid "State.TOO_MANY_MATCHES"
+msgstr ""
+
+msgid "State.NO_MATCH"
+msgstr ""
+

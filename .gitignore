@@ -1,1 +1,4 @@
 instance/
+__pycache__/
+*.py[cod]
+*.mo

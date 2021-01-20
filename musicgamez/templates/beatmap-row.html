@@ -1,7 +1,7 @@
 <tr>
 <td><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.jpg') }}" class="bsite" /></a></td>
 <td>{{ beatmap.choreographer }}</td>
-<td><time datetime="{{ beatmap.date.isoformat()+'Z' }}"><script>document.write(new Date("{{ beatmap.date.isoformat()+'Z' }}").toLocaleString(undefined, {dateStyle: "medium", timeStyle: "medium"}))</script><noscript>{{ beatmap.date|datetimeformat }}</noscript></time></td>
+<td><time datetime="{{ beatmap.date.isoformat()+'Z' }}"><script>document.write(fmt.format(new Date("{{ beatmap.date.isoformat()+'Z' }}")))</script><noscript>{{ beatmap.date|datetimeformat }}</noscript></time></td>
 <td>{{ _("State."+beatmap.state.name) }}</td>
 <td>
 <form action="{{ url_for('main.beatmap', sitename=beatmap.external_site.short_name, extid=beatmap.external_id) }}" method="post">

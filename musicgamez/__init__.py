@@ -38,13 +38,14 @@ from sqlalchemy import orm, event
 from sqlalchemy.pool import NullPool
 from sqlalchemy.schema import MetaData
 from werkzeug.exceptions import HTTPException
-from flask_babel import _
+from flask_babel import _, Domain
 
 
 metadata = MetaData(schema='public')
 db = SQLAlchemy(metadata=metadata)
 scheduler = APScheduler()
 babel = Babel()
+relationship_domain = Domain(domain="relationships")
 
 
 def render_error(e):
@@ -120,6 +121,8 @@ def create_app(test_config=None):
 
     app.jinja_env.filters['translate_artist'] = translate_artist
     app.jinja_env.filters['translate_recording'] = translate_recording
+    app.jinja_env.filters['translate_relationship'] = translate_relationship
+    app.jinja_env.globals['get_locale'] = get_locale
 
     app.cli.add_command(init_db_command)
     app.cli.add_command(import_partybus_stream_permission)
@@ -170,6 +173,10 @@ def translate_recording(recording):
         recording.id,
         '5d564c8f-97de-3572-94bb-7f40ad661499',
         recording.name)
+
+
+def translate_relationship(link_type):
+    return relationship_domain.gettext(link_type.link_phrase)
 
 
 def init_db():
