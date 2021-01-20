@@ -6,7 +6,8 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
-from math import ceil
+from flask_sqlalchemy import Pagination
+import json
 from mbdata.models import *
 from musicgamez import db, translate_artist
 from musicgamez.main.models import *
@@ -20,7 +21,7 @@ bp = Blueprint("main", __name__)
 perpage = 36
 
 
-def recordinglist(q, page, pagetitle, pagelink=None):
+def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
     if request.method == "POST":
         if "game" in request.form:
             if request.form["game"] == "":
@@ -39,10 +40,16 @@ def recordinglist(q, page, pagetitle, pagelink=None):
             del session["game"]
         else:
             q = q.join(Beatmap).filter(Beatmap.external_site==site)
-    result = q.order_by(MiniRecordingView.date.desc()).paginate(page, perpage, True)
-    return render_template("recordinglist.html", recordings=result.items,
-        has_next=result.has_next, has_prev=result.has_prev,
-        next_num=result.next_num, prev_num=result.prev_num,
+    q = q.order_by(MiniRecordingView.date.desc())
+    if paginate is None:
+        q = q.paginate(page, perpage, True)
+        paginate = q
+        items = q.items
+    else:
+        items = q
+    return render_template("recordinglist.html", recordings=items,
+        has_next=paginate.has_next, has_prev=paginate.has_prev,
+        next_num=paginate.next_num, prev_num=paginate.prev_num,
         pagetitle=pagetitle, pagelink=pagelink,
         games=db.session.query(BeatSite))
 
@@ -74,7 +81,7 @@ def genres():
     return render_template("genres.html", genres=h)
 
 
-@bp.route("/tag/<tag>", defaults={ "page": 1}, methods={'GET', 'POST'})
+@bp.route("/tag/<tag>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/tag/<tag>/<int:page>", methods={'GET', 'POST'})
 def tag(tag, page=1):
     return recordinglist(db.session.query(MiniRecordingView)
@@ -88,16 +95,82 @@ def tag(tag, page=1):
                          "https://musicbrainz.org/tag/"+tag)
 
 
-@bp.route("/artist/<uuid:gid>", defaults={ "page": 1}, methods={'GET', 'POST'})
+@bp.route("/release/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
+@bp.route("/release/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+def release(gid, page=1):
+    r = db.session.query(Release).filter(Release.gid == str(gid)).one()
+    return recordinglist(db.session.query(MiniRecordingView)
+                         .join(Track).join(Medium)
+                         .filter(Medium.release == r), page,
+                         r.name,
+                         "https://musicbrainz.org/release/"+str(gid))
+
+
+@bp.route("/artist/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/artist/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
 def artist(gid, page=1):
     a = db.session.query(Artist).filter(Artist.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
-                         .join(ArtistCredit)
-                         .join(ArtistCreditName)
+                         .join(ArtistCredit).join(ArtistCreditName)
                          .filter(ArtistCreditName.artist == a), page,
                          translate_artist(a),
                          "https://musicbrainz.org/artist/"+str(gid))
+
+
+@bp.route("/label/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
+@bp.route("/label/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+def label(gid, page=1):
+    l = db.session.query(Label).filter(Label.gid == str(gid)).one()
+    return recordinglist(db.session.query(MiniRecordingView)
+                         .join(Track).join(Medium).join(Release).join(ReleaseLabel)
+                         .filter(ReleaseLabel.label == l), page,
+                         l.name,
+                         "https://musicbrainz.org/label/"+str(gid))
+
+
+@bp.route("/release-group/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
+@bp.route("/release-group/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+def release_group(gid, page=1):
+    r = db.session.query(ReleaseGroup).filter(ReleaseGroup.gid == str(gid)).one()
+    return recordinglist(db.session.query(MiniRecordingView)
+                         .join(Track).join(Medium).join(Release).join(ReleaseGroup)
+                         .filter(ReleaseGroup.id == r.id), page,
+                         r.name,
+                         "https://musicbrainz.org/release-group/"+str(gid))
+
+
+@bp.route("/collection/<uuid:gid>", defaults={ "page": 1}, methods={'GET', 'POST'})
+@bp.route("/collection/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+def collection(gid, page=1):
+    from musicgamez.main.tasks import urlopen_with_ua
+    baseurl = "https://musicbrainz.org/ws/2"
+    info = json.load(urlopen_with_ua("{}/collection/{}?fmt=json".format(baseurl, gid)))
+    name = info['name']
+    entity = info['entity-type']
+    count = info[entity+'-count']
+    if (page-1)*perpage > count:
+        abort(404)
+    plural = entity+'es' if entity.endswith('s') else entity+'s'
+    entities = json.load(urlopen_with_ua("{}/{}?collection={}&fmt=json&limit={}&offset={}".format(baseurl, entity, gid, perpage, (page-1)*perpage)))[entity+'s']
+    ids = [e['id'] for e in entities]
+    q = db.session.query(MiniRecordingView)
+    if entity == "recording":
+        q = q.filter(MiniRecordingView.gid.in_(ids))
+    elif entity == "release":
+        q = q.join(Track).join(Medium).join(Release).filter(Release.gid.in_(ids))
+    elif entity == "artist":
+        q = q.join(ArtistCredit).join(ArtistCreditName).join(Artist).filter(Artist.gid.in_(ids))
+    # don't want to confuse "recorded in area" with "artist is in area"
+    #elif entity == "area":
+    #    q = q.join(ArtistCredit).join(ArtistCreditName).join(Artist).join(Area).filter(Area.gid.in_(ids))
+    elif entity == "label":
+        q = q.join(Track).join(Medium).join(Release).join(ReleaseLabel).join(Label).filter(Label.gid.in_(ids))
+    elif entity == "release-group":
+        q = q.join(Track).join(Medium).join(Release).join(ReleaseGroup).filter(ReleaseGroup.gid.in_(ids))
+    else:
+        raise NotImplementedError()
+    paginate = Pagination(q, page, perpage, count, q)
+    return recordinglist(q, page, name, "https://musicbrainz.org/collection/"+str(gid), paginate)
 
 
 @bp.route("/recording/<uuid:gid>")
