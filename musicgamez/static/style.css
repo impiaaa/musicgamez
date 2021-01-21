@@ -24,6 +24,7 @@ nav h1 {
     font-size: 16px;
     display: inline-block;
     margin: 0;
+    margin-right: 2em;
 }
 
 nav a {
@@ -35,42 +36,55 @@ nav a:hover {
     color: #ccc;
 }
 
-nav ul {
-    display: inline-block;
+nav>ul {
     margin: 0;
 }
 
-nav ul li {
-    position: relative;
-    display: inline-block;
+nav>ul>li {
     margin-left: 32px;
 }
 
-nav ul li ul {
-    display: none;
-    position: absolute;
-    background-color: #eee;
-    color: #111;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
-    z-index: 1;
-    padding-left: 0;
-}
+@media (hover: hover) {
 
-nav ul li:hover ul {
-    display: block;
-}
+    nav>ul {
+        display: inline-block;
+    }
 
-nav ul li ul li {
-    margin-left: 0;
-    padding: 8px;
-}
+    nav>ul>li {
+        display: inline-block;
+    }
 
-nav ul li ul a {
-    color: #222;
-}
+    nav ul li ul {
+        display: none;
+        position: absolute;
+        background-color: #eee;
+        color: #111;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+        z-index: 1;
+        padding-left: 0;
+    }
+    
+    nav ul li ul li {
+        display: block;
+    }
 
-nav ul li ul a:hover {
-    color: #444;
+    nav ul li:hover ul {
+        display: block;
+    }
+
+    nav ul li ul li {
+        margin-left: 0;
+        padding: 8px;
+    }
+
+    nav ul li ul a {
+        color: #222;
+    }
+
+    nav ul li ul a:hover {
+        color: #444;
+    }
+
 }
 
 .recordinglist {
