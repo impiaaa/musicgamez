@@ -34,7 +34,7 @@
 <div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist|translate_artist }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
 <ul class="bmlist">
 {% for beatmap in recording.beatmaps %}
-<li><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}" title="{{ _("Mapped for %(game)s by %(choreographer)s", game=beatmap.external_site.name, choreographer=beatmap.choreographer) }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.png') }}" class="bsite" /></a></li>
+<li><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}" title="{{ _("Mapped for %(game)s by %(choreographer)s", game=beatmap.external_site.name, choreographer=beatmap.choreographer) }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }}" srcset="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }},{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-48.png') }} 1.5x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-64.png') }} 2x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-96.png') }} 3x" class="bsite" /></a></li>
 {% endfor %}
 </ul></div>
 </div>

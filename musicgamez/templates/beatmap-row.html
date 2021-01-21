@@ -1,5 +1,5 @@
 <tr>
-<td><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'.png') }}" class="bsite" /></a></td>
+<td><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }}" srcset="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }},{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-48.png') }} 1.5x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-64.png') }} 2x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-96.png') }} 3x" class="bsite" /></a></td>
 <td>{{ beatmap.choreographer }}</td>
 <td><time datetime="{{ beatmap.date.isoformat()+'Z' }}"><script>document.write(fmt.format(new Date("{{ beatmap.date.isoformat()+'Z' }}")))</script><noscript>{{ beatmap.date|datetimeformat }}</noscript></time></td>
 <td>{{ _("State."+beatmap.state.name) }}</td>
