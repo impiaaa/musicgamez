@@ -13,6 +13,7 @@ Flask-SQLAlchemy = "*"
 pyacoustid = "*"
 beautifulsoup4 = "*"
 flask-babel = "*"
+Flask-Dance = "*"
 
 [dev-packages]
 

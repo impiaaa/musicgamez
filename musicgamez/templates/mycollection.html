@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}: {{ _("My Collection") }}{% endblock %}
+{% block content %}
+<h2>{{ _("My Collection") }}</h2>
+<h3>MusicBrainz</h3>
+{% if mb_collections %}
+<p><a href="{{ url_for('musicbrainz.logout') }}">{{ _("Log out") }}</a></p>
+<ul>
+{% for collection in mb_collections %}
+<li><a href="{{ url_for('main.collection', gid=collection.id) }}">{{ collection.name }}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p><a href="{{ url_for('musicbrainz.login') }}">{{ _("Log in with MusicBrainz") }}</a></p>
+{% endif %}
+{% endblock %}
+

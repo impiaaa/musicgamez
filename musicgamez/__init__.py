@@ -21,6 +21,7 @@ logging.basicConfig(handlers=[h])
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
+logging.getLogger('requests_oauthlib.oauth2_session').setLevel(logging.DEBUG)
 
 
 import apscheduler
@@ -28,17 +29,21 @@ from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import click
-from flask_apscheduler import APScheduler
-from flask_babel import Babel, get_locale
+from flask import Flask, render_template, request, url_for, redirect
 from flask.cli import with_appcontext
-from flask import Flask, render_template, request
+from flask_apscheduler import APScheduler
+from flask_babel import _, Babel, Domain, get_locale
+from flask_dance.consumer import OAuth2ConsumerBlueprint, OAuth2Session
+from flask_dance.consumer.storage import MemoryStorage
 from flask_sqlalchemy import SQLAlchemy
+from mbdata.models import ArtistAlias, ArtistAliasType, ArtistCreditName
+from mbdata.models import Recording, RecordingAlias, RecordingAliasType
+from oauthlib.oauth2 import BackendApplicationClient
 import os
 from sqlalchemy import orm, event
 from sqlalchemy.pool import NullPool
 from sqlalchemy.schema import MetaData
 from werkzeug.exceptions import HTTPException
-from flask_babel import _, Domain
 
 
 metadata = MetaData(schema='public')
@@ -46,6 +51,73 @@ db = SQLAlchemy(metadata=metadata)
 scheduler = APScheduler()
 babel = Babel()
 relationship_domain = Domain(domain="relationships")
+
+
+class OAuth2SessionWithUserAgent(OAuth2Session):
+    def __init__(self, *args, **kwargs):
+        super(OAuth2SessionWithUserAgent, self).__init__(*args, **kwargs)
+        from musicgamez import db
+        self.headers["User-Agent"] = db.app.config["USER_AGENT"]
+
+
+class OAuth2ConsumerBlueprintWithLogout(OAuth2ConsumerBlueprint):
+    def __init__(self, *args, **kwargs):
+        super(OAuth2ConsumerBlueprintWithLogout, self).__init__(*args, **kwargs)
+        self.add_url_rule(
+            rule="/{bp.name}/logout".format(bp=self),
+            endpoint="logout",
+            view_func=self.logout
+        )
+    
+    def logout(self):
+        del self.token
+        if self.redirect_url:
+            next_url = self.redirect_url
+        elif self.redirect_to:
+            next_url = url_for(self.redirect_to)
+        else:
+            next_url = "/"
+        logging.getLogger("flask_dance.consumer.oauth2").debug("next_url = %s", next_url)
+        return redirect(next_url)
+
+
+oauth_osu = OAuth2ConsumerBlueprintWithLogout('osu', __name__,
+    base_url="https://osu.ppy.sh/api/v2/",
+    token_url="https://osu.ppy.sh/oauth/token",
+    authorization_url="https://osu.ppy.sh/oauth/authorize",
+    scope="public",
+    session_class=OAuth2SessionWithUserAgent
+)
+oauth_osu.from_config = {
+    "session.client_id": "OSU_CLIENT_ID",
+    "session.client_secret": "OSU_CLIENT_SECRET"
+}
+oauth_osu_noauth = OAuth2ConsumerBlueprint('osu-noauth', __name__,
+    base_url="https://osu.ppy.sh/api/v2/",
+    token_url="https://osu.ppy.sh/oauth/token",
+    scope="public",
+    session_class=OAuth2SessionWithUserAgent,
+    client=BackendApplicationClient(None),
+    storage=MemoryStorage
+)
+oauth_osu_noauth.from_config = {
+    "session.client_id": "OSU_CLIENT_ID",
+    "session.client_secret": "OSU_CLIENT_SECRET"
+}
+oauth_musicbrainz = OAuth2ConsumerBlueprintWithLogout('musicbrainz', __name__,
+    base_url="https://musicbrainz.org/ws/2/",
+    token_url="https://musicbrainz.org/oauth2/token",
+    authorization_url="https://musicbrainz.org/oauth2/authorize",
+    scope="collection",
+    session_class=OAuth2SessionWithUserAgent,
+    token_url_params={"include_client_id": True},
+    redirect_to='main.mycollection'
+)
+oauth_musicbrainz.from_config = {
+    "session.client_id": "MUSICBRAINZ_CLIENT_ID",
+    "session.client_secret": "MUSICBRAINZ_CLIENT_SECRET",
+    "client_secret": "MUSICBRAINZ_CLIENT_SECRET"
+}
 
 
 def render_error(e):
@@ -77,7 +149,9 @@ def create_app(test_config=None):
             # on a shared memory space between threads.
             'default': ThreadPoolExecutor()
         },
-        LANGUAGES=['en']
+        LANGUAGES=['en'],
+        USER_AGENT="musicgamez/0.0",
+        PERPAGE=36
     )
     app.jinja_options['trim_blocks'] = True
     app.jinja_options['lstrip_blocks'] = True
@@ -119,11 +193,14 @@ def create_app(test_config=None):
 
     babel.init_app(app)
 
+    app.register_blueprint(oauth_osu, url_prefix="/oauth")
+    app.register_blueprint(oauth_musicbrainz, url_prefix="/oauth")
+
     app.jinja_env.filters['translate_artist'] = translate_artist
     app.jinja_env.filters['translate_recording'] = translate_recording
     app.jinja_env.filters['translate_relationship'] = translate_relationship
     app.jinja_env.globals['get_locale'] = get_locale
-
+    
     app.cli.add_command(init_db_command)
     app.cli.add_command(import_partybus_stream_permission)
     app.cli.add_command(import_creatorhype_stream_permission)
@@ -152,7 +229,6 @@ def translate_entity(type, typetype, idcol, id, typegid, name):
 
 
 def translate_artist(artist):
-    from mbdata.models import ArtistAlias, ArtistAliasType, ArtistCreditName
     if isinstance(artist, ArtistCreditName):
         artist_id = artist.artist_id
     else:
@@ -166,7 +242,6 @@ def translate_artist(artist):
 
 
 def translate_recording(recording):
-    from mbdata.models import Recording, RecordingAlias, RecordingAliasType
     return translate_entity(RecordingAlias,
         RecordingAliasType,
         RecordingAlias.recording_id,

@@ -18,8 +18,6 @@ from flask_babel import _
 
 bp = Blueprint("main", __name__)
 
-perpage = 36
-
 
 def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
     if request.method == "POST":
@@ -42,7 +40,7 @@ def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
             q = q.join(Beatmap).filter(Beatmap.external_site==site)
     q = q.order_by(MiniRecordingView.date.desc())
     if paginate is None:
-        q = q.paginate(page, perpage, True)
+        q = q.paginate(page, db.app.config["PERPAGE"], True)
         paginate = q
         items = q.items
     else:
@@ -142,16 +140,19 @@ def release_group(gid, page=1):
 @bp.route("/collection/<uuid:gid>", defaults={ "page": 1}, methods={'GET', 'POST'})
 @bp.route("/collection/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
 def collection(gid, page=1):
-    from musicgamez.main.tasks import urlopen_with_ua
-    baseurl = "https://musicbrainz.org/ws/2"
-    info = json.load(urlopen_with_ua("{}/collection/{}?fmt=json".format(baseurl, gid)))
+    from musicgamez import oauth_musicbrainz
+    response = oauth_musicbrainz.session.get("collection/{}?fmt=json".format(gid))
+    info = response.json()
+    if 'error' in info:
+        abort(response.status_code)
     name = info['name']
     entity = info['entity-type']
     count = info[entity+'-count']
+    perpage=db.app.config["PERPAGE"]
     if (page-1)*perpage > count:
         abort(404)
     plural = entity+'es' if entity.endswith('s') else entity+'s'
-    entities = json.load(urlopen_with_ua("{}/{}?collection={}&fmt=json&limit={}&offset={}".format(baseurl, entity, gid, perpage, (page-1)*perpage)))[entity+'s']
+    entities = oauth_musicbrainz.session.get("{}?collection={}&fmt=json&limit={}&offset={}".format(entity, gid, perpage, (page-1)*perpage)).json()[entity+'s']
     ids = [e['id'] for e in entities]
     q = db.session.query(MiniRecordingView)
     if entity == "recording":
@@ -171,6 +172,20 @@ def collection(gid, page=1):
         raise NotImplementedError()
     paginate = Pagination(q, page, perpage, count, q)
     return recordinglist(q, page, name, "https://musicbrainz.org/collection/"+str(gid), paginate)
+
+
+@bp.route("/collection")
+def mycollection():
+    from musicgamez import oauth_musicbrainz
+    if oauth_musicbrainz.session.authorized:
+        response = oauth_musicbrainz.session.get("collection?fmt=json")
+        info = response.json()
+        if 'error' in info:
+            abort(response.status_code)
+        mb_collections = info['collections']
+    else:
+        mb_collections = None
+    return render_template("mycollection.html", mb_collections=mb_collections)
 
 
 @bp.route("/recording/<uuid:gid>")

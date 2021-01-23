@@ -8,7 +8,7 @@ import json
 from mbdata.models import ArtistCredit, Recording
 from mbdata.models import Artist, Label
 from mbdata.replication import mbslave_sync_main, Config
-from musicgamez import scheduler, db
+from musicgamez import scheduler, db, oauth_osu_noauth
 from musicgamez.main.models import *
 import os
 import sqlalchemy
@@ -18,11 +18,9 @@ from urllib.parse import urlencode
 from urllib.request import urlopen, Request
 from zipfile import ZipFile
 
-USER_AGENT = "musicgamez/0.0"
-
 
 def urlopen_with_ua(u, **kwargs):
-    headers = {"User-Agent": USER_AGENT}
+    headers = {"User-Agent": db.app.config["USER_AGENT"]}
     if "headers" in kwargs:
         headers.update(kwargs.pop("headers"))
     return urlopen(Request(u, headers=headers, **kwargs))
@@ -129,29 +127,22 @@ def fetch_beatsaber():
 
 
 def osu_auth():
-    token = json.load(
-        urlopen_with_ua(
-            "https://osu.ppy.sh/oauth/token",
-            data=urlencode(
-                {
-                    "client_id": db.app.config["OSU_CLIENT_ID"],
-                    "client_secret": db.app.config["OSU_CLIENT_SECRET"],
-                    "grant_type": "client_credentials",
-                    "scope": "public"}).encode()))["access_token"]
-    return {"Authorization": "Bearer {}".format(token)}
+    oauth_osu_noauth.session.client_id = db.app.config["OSU_CLIENT_ID"]
+    oauth_osu_noauth.session.scope="public"
+    oauth_osu_noauth.session.fetch_token(oauth_osu_noauth.token_url, include_client_id=True, client_secret=db.app.config["OSU_CLIENT_SECRET"], scope="public")
 
 
-def fetch_osu_single(site, session, gametrack_or_id, headers=None):
-    if headers is None:
-        headers = osu_auth()
+def fetch_osu_single(site, db_session, gametrack_or_id):
     if isinstance(gametrack_or_id, str):
-        gametrack = json.load(urlopen_with_ua("https://osu.ppy.sh/api/v2/beatmapsets/"+gametrack_or_id, headers=headers))
+        if not oauth_osu_noauth.session.authorized:
+            osu_auth()
+        gametrack = oauth_osu_noauth.session.get("https://osu.ppy.sh/api/v2/beatmapsets/"+gametrack_or_id).json()
         extId = gametrack_or_id
     else:
         gametrack = gametrack_or_id
         extId = str(gametrack['id'])
-    q = session.query(Beatmap).filter(Beatmap.external_site == site,
-                                      Beatmap.external_id == extId)
+    q = db_session.query(Beatmap).filter(Beatmap.external_site == site,
+                                         Beatmap.external_id == extId)
     if q.count() > 0:
         return
 
@@ -163,8 +154,8 @@ def fetch_osu_single(site, session, gametrack_or_id, headers=None):
                  date=gametrack['submitted_date'],
                  extra=gametrack)
 
-    session.add(bm)
-    session.commit()
+    db_session.add(bm)
+    db_session.commit()
     
     return bm
 
@@ -177,22 +168,20 @@ def fetch_osu():
 
         site = session.query(BeatSite).filter(
             BeatSite.short_name == 'osu').one()
-
-        headers = osu_auth()
+        
+        osu_auth()
 
         cursor = {}
         for page in range(1):
-            response = json.load(
-                urlopen_with_ua(
+            response = oauth_osu_noauth.session.get(
                     "https://osu.ppy.sh/api/v2/beatmapsets/search?sort=updated_desc&s=any&" +
-                    urlencode(cursor),
-                    headers=headers))
+                    urlencode(cursor)).json()
             cursor = {
                 "cursor[{}]".format(k): v for k,
                 v in response['cursor'].items()}
 
             for gametrack in response['beatmapsets']:
-                if fetch_osu_single(site, session, gametrack, headers) is not None:
+                if fetch_osu_single(site, session, gametrack) is not None:
                     imported += 1
 
         db.app.logger.info(
@@ -463,7 +452,7 @@ def lookup_fingerprint():
         session.remove()
 
 
-@scheduler.task('cron', id='mbsync', minute=2, second=0, jitter=60)
+@scheduler.task('cron', id='mbsync', minute=2, second=0, jitter=30)
 def mbsync():
     config_paths = [os.path.join(db.app.instance_path, "mbslave.conf")]
     if "MBSLAVE_CONFIG" in os.environ:
