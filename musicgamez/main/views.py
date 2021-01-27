@@ -6,15 +6,16 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+from flask_babel import _
 from flask_sqlalchemy import Pagination
 import json
 from mbdata.models import *
 from musicgamez import db, translate_artist
 from musicgamez.main.models import *
+import oauthlib
 import sqlalchemy
 from sqlalchemy.sql import func, expression
 from urllib.parse import urlparse, urlunparse
-from flask_babel import _
 
 bp = Blueprint("main", __name__)
 
@@ -144,6 +145,7 @@ def collection(gid, page=1):
     response = oauth_musicbrainz.session.get("collection/{}?fmt=json".format(gid))
     info = response.json()
     if 'error' in info:
+        db.app.logger.error(info)
         abort(response.status_code)
     name = info['name']
     entity = info['entity-type']
@@ -152,6 +154,8 @@ def collection(gid, page=1):
     if (page-1)*perpage > count:
         abort(404)
     plural = entity+'es' if entity.endswith('s') else entity+'s'
+    # TODO: doing things this way means that some pages could be empty, and some
+    # could be longer than perpage
     entities = oauth_musicbrainz.session.get("{}?collection={}&fmt=json&limit={}&offset={}".format(entity, gid, perpage, (page-1)*perpage)).json()[entity+'s']
     ids = [e['id'] for e in entities]
     q = db.session.query(MiniRecordingView)
@@ -174,18 +178,84 @@ def collection(gid, page=1):
     return recordinglist(q, page, name, "https://musicbrainz.org/collection/"+str(gid), paginate)
 
 
+def spotifylist(name, link, entities, page, count):
+    isrcs = [item["external_ids"]["isrc"] for item in entities if "external_ids" in item and "isrc" in item["external_ids"]]
+    urls = [url for item in entities for url in item.get("external_urls", {}).values()]
+    q = db.session.query(MiniRecordingView).join(ISRC).filter(ISRC.isrc.in_(isrcs))
+    paginate = Pagination(q, page, db.app.config["PERPAGE"], count, q)
+    return recordinglist(q, page, name, link, paginate)
+
+
+@bp.route("/spotify/playlist/<id>")
+def spotify_playlist(id):
+    from musicgamez import oauth_spotify
+    response = oauth_spotify.session.get("playlists/{}?fields=name,external_urls,tracks.items(track(external_ids,external_urls,name,artists))".format(id))
+    info = response.json()
+    if 'error' in info:
+        db.app.logger.error(info)
+        abort(response.status_code)
+    return spotifylist(info['name'], info['external_urls']['spotify'], [item['track'] for item in info['tracks']['items']], 0, 0)
+
+
+@bp.route("/spotify/tracks", defaults={"page": 1}, methods={'GET', 'POST'})
+@bp.route("/spotify/tracks/<int:page>", methods={'GET', 'POST'})
+def spotify_tracks(page=1):
+    from musicgamez import oauth_spotify
+    response = oauth_spotify.session.get("me/tracks?limit={}&offset={}&fields=items(track(external_ids,external_urls,name,artists))".format(db.app.config["PERPAGE"], db.app.config["PERPAGE"]*(page-1)))
+    info = response.json()
+    if 'error' in info:
+        db.app.logger.error(info)
+        abort(response.status_code)
+    return spotifylist(_("Saved tracks"), None, [item['track'] for item in info['items']], page, info['total'])
+
+
+@bp.route("/spotify/albums", defaults={"page": 1}, methods={'GET', 'POST'})
+@bp.route("/spotify/albums/<int:page>", methods={'GET', 'POST'})
+def spotify_albums(page=1):
+    from musicgamez import oauth_spotify
+    response = oauth_spotify.session.get("me/albums?limit={}&offset={}&fields=items(album(external_ids,external_urls,name,artists))".format(db.app.config["PERPAGE"], db.app.config["PERPAGE"]*(page-1)))
+    info = response.json()
+    if 'error' in info:
+        db.app.logger.error(info)
+        abort(response.status_code)
+    upcs = [item["album"]["external_ids"]["upc"] for item in info['items'] if "external_ids" in item["album"] and "upc" in item["album"]["external_ids"]]
+    urls = [url for item in info['items'] for url in item["album"].get("external_urls", {}).values()]
+    q = db.session.query(MiniRecordingView).join(Track).join(Medium).join(Release).filter(Release.barcode.in_(upcs))
+    paginate = Pagination(q, page, db.app.config["PERPAGE"], info['total'], q)
+    return recordinglist(q, page, _("Saved albums"), None, paginate)
+
+
 @bp.route("/collection")
 def mycollection():
-    from musicgamez import oauth_musicbrainz
+    from musicgamez import oauth_musicbrainz, oauth_spotify
     if oauth_musicbrainz.session.authorized:
-        response = oauth_musicbrainz.session.get("collection?fmt=json")
-        info = response.json()
-        if 'error' in info:
-            abort(response.status_code)
-        mb_collections = info['collections']
+        try:
+            response = oauth_musicbrainz.session.get("collection?fmt=json")
+            info = response.json()
+            if 'error' in info:
+                db.app.logger.error(info)
+                abort(response.status_code)
+            mb_collections = info['collections']
+        except oauthlib.oauth2.rfc6749.errors.TokenExpiredError:
+            mb_collections = None
+            del oauth_musicbrainz.token
     else:
         mb_collections = None
-    return render_template("mycollection.html", mb_collections=mb_collections)
+    if oauth_spotify.session.authorized:
+        try:
+            response = oauth_spotify.session.get("me/playlists?limit=50")
+            info = response.json()
+            if 'error' in info:
+                db.app.logger.error(info)
+                abort(response.status_code)
+            spotify_playlists = info['items']
+        except oauthlib.oauth2.rfc6749.errors.TokenExpiredError:
+            spotify_playlists = None
+            del oauth_spotify.token
+    else:
+        spotify_playlists = None
+    return render_template("mycollection.html",
+        mb_collections=mb_collections, spotify_playlists=spotify_playlists)
 
 
 @bp.route("/recording/<uuid:gid>")

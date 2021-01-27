@@ -13,5 +13,18 @@
 {% else %}
 <p><a href="{{ url_for('musicbrainz.login') }}">{{ _("Log in with MusicBrainz") }}</a></p>
 {% endif %}
+<h3>Spotify</h3>
+{% if spotify_playlists %}
+<p><a href="{{ url_for('spotify.logout') }}">{{ _("Log out") }}</a></p>
+<ul>
+<li><a href="{{ url_for('main.spotify_albums') }}">{{ _("Saved albums") }}</a></li>
+<li><a href="{{ url_for('main.spotify_tracks') }}">{{ _("Saved tracks") }}</a></li>
+{% for playlist in spotify_playlists %}
+<li><a href="{{ url_for('main.spotify_playlist', id=playlist.id) }}">{{ playlist.name }}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p><a href="{{ url_for('spotify.login') }}">{{ _("Log in with Spotify") }}</a></p>
+{% endif %}
 {% endblock %}
 

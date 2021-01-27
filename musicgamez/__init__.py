@@ -21,7 +21,7 @@ logging.basicConfig(handlers=[h])
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
-logging.getLogger('requests_oauthlib.oauth2_session').setLevel(logging.DEBUG)
+logging.getLogger('requests_oauthlib.oauth2_session').setLevel(logging.INFO)
 
 
 import apscheduler
@@ -118,7 +118,18 @@ oauth_musicbrainz.from_config = {
     "session.client_secret": "MUSICBRAINZ_CLIENT_SECRET",
     "client_secret": "MUSICBRAINZ_CLIENT_SECRET"
 }
-
+oauth_spotify = OAuth2ConsumerBlueprintWithLogout(
+    "spotify",
+    __name__,
+    scope="playlist-read-collaborative user-library-read playlist-read-private",
+    base_url="https://api.spotify.com/v1/",
+    authorization_url="https://accounts.spotify.com/authorize",
+    token_url="https://accounts.spotify.com/api/token",
+    redirect_to='main.mycollection',
+    session_class=OAuth2SessionWithUserAgent,
+)
+oauth_spotify.from_config["client_id"] = "SPOTIFY_OAUTH_CLIENT_ID"
+oauth_spotify.from_config["client_secret"] = "SPOTIFY_OAUTH_CLIENT_SECRET"
 
 def render_error(e):
     return render_template('error.html', name=e.name,
@@ -195,6 +206,7 @@ def create_app(test_config=None):
 
     app.register_blueprint(oauth_osu, url_prefix="/oauth")
     app.register_blueprint(oauth_musicbrainz, url_prefix="/oauth")
+    app.register_blueprint(oauth_spotify, url_prefix="/oauth")
 
     app.jinja_env.filters['translate_artist'] = translate_artist
     app.jinja_env.filters['translate_recording'] = translate_recording
