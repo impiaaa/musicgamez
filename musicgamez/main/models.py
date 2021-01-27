@@ -2,8 +2,9 @@ import enum
 from mbdata.models import *
 from musicgamez import db
 from musicgamez.views import view
-from sqlalchemy import event, select
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import event, select, DDL
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.schema import FetchedValue
 from sqlalchemy.sql import func, expression
 from sqlalchemy.orm import backref
 
@@ -55,10 +56,10 @@ class Beatmap(db.Model):
     i = db.Index('external_ref', external_id, external_site_id, unique=True)
     choreographer = db.Column(db.String)
     date = db.Column(db.DateTime)
-    extra = db.Column(db.JSON)
+    extra = db.Column(JSONB)
 
     state = db.Column(db.Enum(State), default=State.INITIAL, nullable=False)
-    last_checked = db.Column(db.DateTime, server_default=func.now(), nullable=False)
+    last_checked = db.Column(db.DateTime, server_default=func.now(), nullable=False, server_onupdate=FetchedValue())
     duration = db.Column(db.Float)
     fingerprint = db.Column(db.String)
     track_id = db.Column(UUID)
@@ -95,6 +96,30 @@ class Beatmap(db.Model):
             assert self.track_id is not None
         else:
             assert False
+
+
+event.listen(
+    Beatmap.__table__,
+    'after_create',
+    DDL(
+        "CREATE FUNCTION update_last_checked() "
+        "RETURNS TRIGGER AS $$ "
+        "BEGIN "
+        "NEW.last_checked = NOW(); "
+        "RETURN NEW; "
+        "END; $$ LANGUAGE PLPGSQL"
+    )
+)
+
+event.listen(
+    Beatmap.__table__,
+    'after_create',
+    DDL(
+        "CREATE TRIGGER update_last_checked "
+        "BEFORE UPDATE ON beatmap "
+        "FOR EACH ROW EXECUTE PROCEDURE update_last_checked();"
+    )
+)
 
 
 class ArtistStreamPermission(db.Model):

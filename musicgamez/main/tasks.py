@@ -276,7 +276,7 @@ def match_with_string():
         session = db.create_scoped_session()
         total = 0
         for bm in session.query(Beatmap).filter(
-                Beatmap.state == Beatmap.State.INITIAL).limit(10):
+                Beatmap.state == Beatmap.State.INITIAL).order_by(Beatmap.last_checked).limit(10):
             # TODO use normalize(nfkc) once on PosgreSQL 13
             # TODO use aliases
             q = session.query(Recording).filter(func.lower(Recording.name, type_=db.String) == bm.title.lower(),
@@ -294,7 +294,6 @@ def match_with_string():
                 bm.state = Beatmap.State.MATCHED_WITH_STRING
                 matched += 1
             total += 1
-            bm.last_checked = datetime.now()
             session.commit()
         session.remove()
         s = "Matched {} beatmaps using string".format(matched)
@@ -371,14 +370,12 @@ def generate_fingerprint():
             bm.duration, fp = fingerprint_file(t.name, force_fpcalc=True)
             bm.fingerprint = fp.decode('ascii')
             bm.state = Beatmap.State.HAS_FINGERPRINT
-            bm.last_checked = datetime.now()
             session.commit()
         except Exception as e:
             db.app.logger.error(
                 "Error generating fingerprint for beatmap {}: {}".format(
                     bm.id, e))
             bm.state = Beatmap.State.ERROR
-            bm.last_checked = datetime.now()
             session.commit()
         session.remove()
 
@@ -412,7 +409,6 @@ def lookup_fingerprint():
 
             if len(response['results']) == 0:
                 bm.state = Beatmap.State.NO_MATCH
-                bm.last_checked = datetime.now()
                 db.app.logger.debug("No matches for beatmap {}".format(bm.id))
                 session.commit()
                 session.remove()
@@ -440,14 +436,12 @@ def lookup_fingerprint():
                 db.app.logger.debug(
                     "Too many matches for beatmap {} track {}".format(
                         bm.id, bm.track_id))
-            bm.last_checked = datetime.now()
             session.commit()
         except Exception as e:
             db.app.logger.error(
                 "Error looking up fingerprint for beatmap {}: {}".format(
                     bm.id, e))
             bm.state = Beatmap.State.ERROR
-            bm.last_checked = datetime.now()
             session.commit()
         session.remove()
 
