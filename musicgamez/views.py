@@ -39,6 +39,6 @@ def view(name, metadata, selectable, material=False):
     for c in selectable.c:
         c._make_proxy(t)
 
-    CreateView(name, selectable).execute_at('after-create', metadata)
+    CreateView(name, selectable, material).execute_at('after-create', metadata)
     DropView(name).execute_at('before-drop', metadata)
     return t

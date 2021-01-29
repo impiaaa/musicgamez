@@ -228,6 +228,46 @@ class MiniRecordingView(db.Model):
         .group_by(
             Recording.id, Recording.gid, Recording.name, Recording.artist_credit_id
         ),
+        material=True
     )
     artist_credit = db.relationship(ArtistCredit)
     beatmaps = db.relationship(Beatmap)
+    id_index = db.Index('ix_public_mini_recording_view_id', __table__.c.id, unique=True)
+    gid_index = db.Index('ix_public_mini_recording_view_gid', __table__.c.gid, unique=True)
+
+
+event.listen(
+    db.metadata,
+    'after_create',
+    DDL("CREATE UNIQUE INDEX ix_public_mini_recording_view_id ON mini_recording_view (id)")
+)
+
+event.listen(
+    db.metadata,
+    'after_create',
+    DDL("CREATE UNIQUE INDEX ix_public_mini_recording_view_gid ON mini_recording_view (gid)")
+)
+
+event.listen(
+    db.metadata,
+    'after_create',
+    DDL(
+        "CREATE FUNCTION update_mini_recording_view() "
+        "RETURNS TRIGGER AS $$ "
+        "BEGIN "
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY mini_recording_view; "
+        "RETURN NULL; "
+        "END; $$ LANGUAGE PLPGSQL;"
+    )
+)
+
+event.listen(
+    db.metadata,
+    'after_create',
+    DDL(
+        "CREATE TRIGGER update_mini_recording_view "
+        "AFTER UPDATE OF recording_gid ON beatmap "
+        "FOR EACH STATEMENT EXECUTE PROCEDURE update_mini_recording_view();"
+    )
+)
+

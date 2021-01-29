@@ -294,13 +294,12 @@ def match_with_string():
                 bm.state = Beatmap.State.MATCHED_WITH_STRING
                 matched += 1
             total += 1
+            #session.commit()
+        if matched > 0:
+            db.app.logger.info("Matched {} beatmaps using string".format(matched))
+        if total > 0:
             session.commit()
         session.remove()
-        s = "Matched {} beatmaps using string".format(matched)
-        if matched > 0:
-            db.app.logger.info(s)
-        #else:
-            #db.app.logger.debug(s)
 
 
 def zipopen_lower(z, fname):
