@@ -15,11 +15,11 @@
 <li><a href="{{ url_for('main.genres') }}"><i class="fa-li fa fa-book" aria-hidden="true"></i>{{ _("Browse") }}</a></li>
 <li><i class="fa-li fa fa-wrench" aria-hidden="true"></i>{{ _("Tools") }}
 <ul>
-<li><a href="/collection">{{ _("My Collection") }}</a></li>
+<li><a href="{{ url_for('main.mycollection') }}">{{ _("My Collection") }}</a></li>
 <li><a href="{{ url_for('main.lookup') }}">{{ _("Lookup") }}</a></li>
 </ul>
 </li>
-<li><a href="/about"><i class="fa-li fa fa-info-circle" aria-hidden="true"></i>{{ _("About/Help") }}</a></li>
+<li><a href="{{ url_for('main.about') }}"><i class="fa-li fa fa-info-circle" aria-hidden="true"></i>{{ _("About/Help") }}</a></li>
 </ul>
 </nav>
 <div>
@@ -31,7 +31,7 @@
 {% block content %}{% endblock %}
 </main>
 <footer>
-<p>{{ _('Music metadata by <a href="https://musicbrainz.org/">MusicBrainz</a> contributors is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">CC BY-NC-SA 3.0</a>') }}</p>
+<p>{{ _('Music metadata by <a href="https://musicbrainz.org/">MusicBrainz</a> contributors is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">CC BY-NC-SA 3.0</a>. MusicGamez is not afilliated with or endorsed by MusicBrainz or the MetaBrainz Foundation.') }}</p>
 </footer>
 </body>
 </html>

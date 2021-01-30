@@ -7,7 +7,7 @@
 {%- endfor -%}
 </div>
 <h2><a href="https://musicbrainz.org/recording/{{ recording.gid }}">{{ recording|translate_recording }}</a></h2>
-<h3>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist|translate_artist }}</a>{{ artist.join_phrase }}{% endfor %}</h3>
+<h3>{% for artist in recording.artist_credit.artists %}<a href="{{ url_for('main.artist', gid=artist.artist.gid) }}">{{ artist|translate_artist }}</a>{{ artist.join_phrase }}{% endfor %}</h3>
 {% for rec_license in rec_licenses %}
 <p>
 <a href="{{ rec_license.url }}">

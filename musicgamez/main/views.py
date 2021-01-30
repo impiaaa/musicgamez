@@ -410,3 +410,8 @@ def lookup():
 @bp.route("/coffee", methods={'BREW', 'POST'})
 def coffee():
     abort(418)
+
+
+@bp.route("/about")
+def about():
+    return render_template("about.html")

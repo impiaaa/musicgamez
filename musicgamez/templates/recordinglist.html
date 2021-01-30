@@ -17,7 +17,7 @@
 <ul class="recordinglist">
 {% for recording in recordings %}
 <li {% if recording.cover_id %}style="background-image:linear-gradient(rgba(0,0,0,.5),transparent,rgba(0,0,0,.5)),url(//coverartarchive.org/release/{{ recording.cover_id }}-250.jpg)"{% endif %}
-><div><div class="titlerow"><h3><a href="/recording/{{ recording.gid }}">{{ recording|translate_recording }}</a></h3>
+><div><div class="titlerow"><h3><a href="{{ url_for('main.recording', gid=recording.gid) }}">{{ recording|translate_recording }}</a></h3>
 <div class="licenselist">
 {% if recording.license_url %}
 {% if recording.license_url.startswith("https://creativecommons.org/licenses/") or recording.license_url.startswith("https://creativecommons.org/publicdomain/") %}
@@ -31,7 +31,7 @@
 <span title="{{ _("Not published under a label") }}"><i class="fa fa-circle-thin" aria-hidden="true"></i></span>
 {% endif %}
 </div></div>
-<div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="/artist/{{ artist.artist.gid }}">{{ artist|translate_artist }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
+<div class="artistrow"><h4>{% for artist in recording.artist_credit.artists %}<a href="{{ url_for('main.artist', gid=artist.artist.gid) }}">{{ artist|translate_artist }}</a>{{ artist.join_phrase }}{% endfor %}</h4>
 <ul class="bmlist">
 {% for beatmap in recording.beatmaps %}
 <li><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}" title="{{ _("Mapped for %(game)s by %(choreographer)s", game=beatmap.external_site.name, choreographer=beatmap.choreographer) }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }}" srcset="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }},{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-48.png') }} 1.5x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-64.png') }} 2x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-96.png') }} 3x" class="bsite" /></a></li>
