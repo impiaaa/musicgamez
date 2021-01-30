@@ -189,3 +189,9 @@ footer {
     margin-top: -8px;
 }
 
+.beta {
+    position: fixed;
+    top: 0;
+    right: 0;
+}
+
