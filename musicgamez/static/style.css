@@ -85,6 +85,15 @@ nav>ul>li {
         color: #444;
     }
 
+    .nav-right {
+        float: right;
+        margin-top: -8px;
+    }
+
+}
+
+.nav-right {
+    font-size: 32px;
 }
 
 .recordinglist {
@@ -183,15 +192,10 @@ footer {
     font-size: small;
 }
 
-.nav-right {
-    float: right;
-    font-size: 32px;
-    margin-top: -8px;
-}
-
 .beta {
     position: fixed;
     top: 0;
     right: 0;
+    pointer-events: none;
 }
 
