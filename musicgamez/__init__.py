@@ -161,7 +161,7 @@ def create_app(test_config=None):
             'default': ThreadPoolExecutor()
         },
         LANGUAGES=['en'],
-        USER_AGENT="musicgamez/0.0",
+        USER_AGENT="MusicGamez/0.1 ( https://musicgamez.info )",
         PERPAGE=36
     )
     app.jinja_options['trim_blocks'] = True
