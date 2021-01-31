@@ -90,7 +90,8 @@ oauth_osu = OAuth2ConsumerBlueprintWithLogout('osu', __name__,
 )
 oauth_osu.from_config = {
     "session.client_id": "OSU_CLIENT_ID",
-    "session.client_secret": "OSU_CLIENT_SECRET"
+    "session.client_secret": "OSU_CLIENT_SECRET",
+    "client_secret": "OSU_CLIENT_SECRET"
 }
 oauth_osu_noauth = OAuth2ConsumerBlueprint('osu-noauth', __name__,
     base_url="https://osu.ppy.sh/api/v2/",
@@ -102,7 +103,8 @@ oauth_osu_noauth = OAuth2ConsumerBlueprint('osu-noauth', __name__,
 )
 oauth_osu_noauth.from_config = {
     "session.client_id": "OSU_CLIENT_ID",
-    "session.client_secret": "OSU_CLIENT_SECRET"
+    "session.client_secret": "OSU_CLIENT_SECRET",
+    "client_secret": "OSU_CLIENT_SECRET"
 }
 oauth_musicbrainz = OAuth2ConsumerBlueprintWithLogout('musicbrainz', __name__,
     base_url="https://musicbrainz.org/ws/2/",
@@ -181,10 +183,13 @@ def create_app(test_config=None):
     db.app = app
     db.init_app(app)
 
+    if app.debug:
+        jobstore = MemoryJobStore()
+    else:
+        jobstore = SQLAlchemyJobStore(url=app.config.get('SQLALCHEMY_DATABASE_URI'))
     app.config.from_mapping(
         SCHEDULER_JOBSTORES={
-            #SQLAlchemyJobStore(url=app.config.get('SQLALCHEMY_DATABASE_URI'))
-            'default': MemoryJobStore()
+            'default': jobstore
         },
     )
     if scheduler.running:
@@ -342,15 +347,10 @@ def fetch_beatsaber_single_command(id):
         pass
     match_with_string()
 
-@click.command("fetch-beastsaber")
+@click.command("fetch-beatsaber-dump")
 @with_appcontext
 def fetch_beastsaber_command():
     scheduler.shutdown()
-    from musicgamez.main.tasks import fetch_beastsaber, match_with_string
-    fetch_beastsaber()
-    try:
-        scheduler.shutdown()
-    except apscheduler.schedulers.SchedulerNotRunningError:
-        pass
-    match_with_string()
+    from musicgamez.main.tasks import fetch_beatsaber_dump
+    fetch_beatsaber_dump()
 

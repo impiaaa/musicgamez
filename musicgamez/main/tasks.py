@@ -58,9 +58,7 @@ def fetch_beatsaber_single(site, session, gametrack_or_id):
     return bm
 
 
-def fetch_beastsaber():
-    from bs4 import BeautifulSoup
-    import time
+def fetch_beatsaber_dump():
     with db.app.app_context():
         imported = 0
         session = db.create_scoped_session()
@@ -68,26 +66,9 @@ def fetch_beastsaber():
         site = session.query(BeatSite).filter(
             BeatSite.short_name == 'bs').one()
 
-        for page in range(10):
-            soup = BeautifulSoup(
-                urlopen_with_ua(
-                    "https://bsaber.com/curator-recommended/page/" +
-                    str(page)+'/'))
-            time.sleep(1)
-            lastPage = False
-
-            for a in soup.find_all(rel="bookmark"):
-                id = a['href'][25:-1]
-                q = session.query(Beatmap).filter(Beatmap.external_site == site,
-                                                  Beatmap.external_id == id)
-                if q.count() > 0:
-                    lastPage = True
-                    break
-                
-                if fetch_beatsaber_single(site, session, id) is not None:
-                    imported += 1
-            if lastPage:
-                break
+        for gametrack in json.load(urlopen_with_ua("https://github.com/andruzzzhka/BeatSaberScrappedData/raw/master/beatSaverScrappedData.json")):
+            if fetch_beatsaber_single(site, session, gametrack) is not None:
+                imported += 1
 
         db.app.logger.info(
             "Imported {} beatmaps for {}".format(
