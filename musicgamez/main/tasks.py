@@ -428,7 +428,7 @@ def lookup_fingerprint():
 
 @scheduler.task('cron', id='mbsync', minute=2, second=0, jitter=30)
 def mbsync():
-    config_paths = [os.path.join(db.app.instance_path, "mbslave.conf")]
+    config_paths = ['/etc/mbslave.conf', os.path.join(db.app.instance_path, "mbslave.conf")]
     if "MBSLAVE_CONFIG" in os.environ:
         config_paths.append(os.environ["MBSLAVE_CONFIG"])
     args = Namespace()
