@@ -270,7 +270,8 @@ def recording(gid):
         .filter(Track.recording == rec)\
         .filter(ArtType.gid == 'ac337166-a2b3-340c-a0b4-e2b00f1d40a2')\
         .order_by(func.random())\
-        .limit(5)
+        .limit(5)\
+        .all()
     rec_licenses = db.session.query(URL)\
         .join(LinkRecordingURL)\
         .join(Link)\

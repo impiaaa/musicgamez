@@ -1,5 +1,23 @@
 {% extends 'base.html' %}
 {% block title %}: {{ recording|translate_recording }}{% endblock %}
+{% block head %}
+<meta property="og:title" content="{{ recording|translate_recording }}" />
+<meta property="og:type" content="music.song" />
+{% for coverart in covers %}
+<meta property="og:image" content="//coverartarchive.org/release/{{ coverart.release.gid }}/{{ coverart.id }}-250.jpg" />
+{% endfor %}
+<meta property="og:url" content="{{ url_for('main.recording', gid=recording.gid) }}" />
+<meta property="og:locale" content="{{ get_locale().language }}" />
+{% if recording.length %}
+<meta property="og:music:duration" content="{{ recording.length }}" />
+{% endif %}
+{% for artist in recording.artist_credit.artists %}
+<meta property="og:music:musician" content="{{ artist|translate_artist }}" />
+{% if artist.artist.gender %}
+<meta property="og:music:musician:gender" content="{{ artist.artist.gender.name }}" />
+{% endif %}
+{% endfor %}
+{% endblock %}
 {% block content %}
 <div class="coverwall">
 {%- for coverart in covers -%}
