@@ -50,6 +50,7 @@ def fetch_beatsaber_single(site, session, gametrack_or_id):
                  external_site=site,
                  choreographer=mapperName,
                  date=gametrack['uploaded'],
+                 duration=meta['duration'],
                  extra=gametrack)
 
     session.add(bm)
@@ -133,6 +134,7 @@ def fetch_osu_single(site, db_session, gametrack_or_id):
                  external_site=site,
                  choreographer=gametrack['creator'],
                  date=gametrack['submitted_date'],
+                 duration=max([variant['total_length'] for variant in gametrack['beatmaps']], default=None),
                  extra=gametrack)
 
     db_session.add(bm)
@@ -256,24 +258,30 @@ def match_with_string():
         matched = 0
         session = db.create_scoped_session()
         total = 0
-        for bm in session.query(Beatmap).filter(
-                Beatmap.state == Beatmap.State.INITIAL).order_by(Beatmap.last_checked).limit(10):
+        for bm in session.query(Beatmap)\
+                         .filter(Beatmap.state == Beatmap.State.INITIAL)\
+                         .order_by(Beatmap.last_checked)\
+                         .limit(10):
             # TODO use normalize(nfkc) once on PosgreSQL 13
             # TODO use aliases
-            q = session.query(Recording).filter(func.lower(Recording.name, type_=db.String) == bm.title.lower(),
-                                                Recording.artist_credit.has(func.lower(ArtistCredit.name, type_=db.String) == bm.artist.lower()))
-            try:
-                rec = q.one()
-            except sqlalchemy.orm.exc.NoResultFound as e:
-                rec = None
-            except sqlalchemy.orm.exc.MultipleResultsFound as e:
-                rec = None
-            if rec is None:
-                bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
-            else:
-                bm.recording = rec
-                bm.state = Beatmap.State.MATCHED_WITH_STRING
+            stmt = sqlalchemy.select([func.count()])\
+                             .select_from(Track.__table__)\
+                             .where(Track.recording_id == Recording.id)\
+                             .correlate(Recording.__table__)
+            q = session.query(Recording)\
+                       .filter(func.lower(Recording.name, type_=db.String) == bm.title.lower(),
+                               Recording.artist_credit.has(func.lower(ArtistCredit.name, type_=db.String) == bm.artist.lower()))\
+                       .order_by(func.abs(Recording.length-((bm.duration or 0)*1000)), sqlalchemy.desc(stmt))
+            c = q.count()
+            if c > 0:
+                bm.recording = q.first()
                 matched += 1
+                if c == 1:
+                    bm.state = Beatmap.State.MATCHED_WITH_STRING
+                else:
+                    bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
+            else:
+                bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
             total += 1
             #session.commit()
         if matched > 0:
