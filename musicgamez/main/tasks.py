@@ -11,6 +11,7 @@ from mbdata.replication import mbslave_sync_main, Config
 from musicgamez import scheduler, db, oauth_osu_noauth
 from musicgamez.main.models import *
 import os
+import psycopg2
 import sqlalchemy
 from sqlalchemy.sql import func
 from tempfile import TemporaryFile, NamedTemporaryFile
@@ -452,7 +453,20 @@ def mbsync():
         config_paths.append(os.environ["MBSLAVE_CONFIG"])
     args = Namespace()
     args.keep_running = False
-    mbslave_sync_main(Config(config_paths), args)
+    try:
+        mbslave_sync_main(Config(config_paths), args)
+    except psycopg2.errors.ForeignKeyViolation:
+        with db.app.app_context():
+            session = db.create_scoped_session()
+            session.execute("ALTER TABLE public.beatmap DROP CONSTRAINT beatmap_recording_gid_fkey")
+            session.commit()
+            mbslave_sync_main(Config(config_paths), args)
+            for bm, redir in session.query(Beatmap, RecordingGIDRedirect).filter(Beatmap.recording_gid==RecordingGIDRedirect.gid):
+                bm.recording_gid = redir.recording.gid
+            session.commit()
+            session.execute("ALTER TABLE public.beatmap ADD CONSTRAINT beatmap_recording_gid_fkey FOREIGN KEY (recording_gid) REFERENCES musicbrainz.recording(gid)")
+            session.commit()
+            session.remove()
 
 
 @scheduler.task('interval', id='update_mini_recording_view', minutes=15)
