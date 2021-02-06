@@ -247,27 +247,3 @@ event.listen(
     'after_create',
     DDL("CREATE UNIQUE INDEX ix_public_mini_recording_view_gid ON mini_recording_view (gid)")
 )
-
-event.listen(
-    db.metadata,
-    'after_create',
-    DDL(
-        "CREATE FUNCTION update_mini_recording_view() "
-        "RETURNS TRIGGER AS $$ "
-        "BEGIN "
-        "REFRESH MATERIALIZED VIEW CONCURRENTLY mini_recording_view; "
-        "RETURN NULL; "
-        "END; $$ LANGUAGE PLPGSQL;"
-    )
-)
-
-event.listen(
-    db.metadata,
-    'after_create',
-    DDL(
-        "CREATE TRIGGER update_mini_recording_view "
-        "AFTER UPDATE OF recording_gid ON beatmap "
-        "FOR EACH STATEMENT EXECUTE PROCEDURE update_mini_recording_view();"
-    )
-)
-

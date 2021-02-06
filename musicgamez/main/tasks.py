@@ -276,10 +276,7 @@ def match_with_string():
             if c > 0:
                 bm.recording = q.first()
                 matched += 1
-                if c == 1:
-                    bm.state = Beatmap.State.MATCHED_WITH_STRING
-                else:
-                    bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
+                bm.state = Beatmap.State.MATCHED_WITH_STRING
             else:
                 bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
             total += 1
@@ -442,3 +439,12 @@ def mbsync():
     args = Namespace()
     args.keep_running = False
     mbslave_sync_main(Config(config_paths), args)
+
+
+@scheduler.task('interval', id='update_mini_recording_view', minutes=15)
+def update_mini_recording_view():
+    with db.app.app_context():
+        session = db.create_scoped_session()
+        session.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mini_recording_view")
+        session.commit()
+        session.remove()
