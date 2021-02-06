@@ -426,11 +426,17 @@ def lookup_fingerprint():
                 redir = session.query(RecordingGIDRedirect).filter(RecordingGIDRedirect.gid==gid).one_or_none()
                 if redir is not None:
                     gid = redir.redirect.gid
-                bm.recording_gid = gid
-                bm.state = Beatmap.State.MATCHED_WITH_FINGERPRINT
-                db.app.logger.info(
-                    "Matched beatmap {} with recording {}".format(
-                        bm.id, bm.recording_gid))
+                if session.query(Recording).filter(Recording.gid==gid).count() == 0:
+                    bm.state = Beatmap.State.NO_MATCH
+                    db.app.logger.warning(
+                        "Match beatmap {} track {} recording {} not found".format(
+                            bm.id, bm.track_id, gid))
+                else:
+                    bm.recording_gid = gid
+                    bm.state = Beatmap.State.MATCHED_WITH_FINGERPRINT
+                    db.app.logger.info(
+                        "Matched beatmap {} with recording {}".format(
+                            bm.id, bm.recording_gid))
             else:
                 bm.state = Beatmap.State.TOO_MANY_MATCHES
                 db.app.logger.debug(
