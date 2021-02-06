@@ -22,3 +22,6 @@ msgstr "Too many possible matches"
 msgid "State.NO_MATCH"
 msgstr "No matches found"
 
+msgid "State.MATCHED_WITH_STRING_MULTIPLE"
+msgstr "Matched (uncertain)"
+

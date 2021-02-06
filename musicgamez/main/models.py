@@ -42,6 +42,7 @@ class Beatmap(db.Model):
         MATCHED_WITH_FINGERPRINT = 4
         TOO_MANY_MATCHES = 5
         NO_MATCH = 6
+        MATCHED_WITH_STRING_MULTIPLE = 7
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -72,7 +73,7 @@ class Beatmap(db.Model):
             assert self.fingerprint is None
             assert self.track_id is None
             assert self.recording is None
-        elif self.state == self.State.MATCHED_WITH_STRING:
+        elif self.state == self.State.MATCHED_WITH_STRING or self.state == self.State.MATCHED_WITH_STRING_MULTIPLE:
             assert self.duration is None
             assert self.fingerprint is None
             assert self.track_id is None

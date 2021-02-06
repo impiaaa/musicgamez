@@ -271,12 +271,16 @@ def match_with_string():
             q = session.query(Recording)\
                        .filter(func.lower(Recording.name, type_=db.String) == bm.title.lower(),
                                Recording.artist_credit.has(func.lower(ArtistCredit.name, type_=db.String) == bm.artist.lower()))\
-                       .order_by(func.abs(Recording.length-((bm.duration or 0)*1000)), sqlalchemy.desc(stmt))
-            c = q.count()
-            if c > 0:
-                bm.recording = q.first()
+                       .order_by(func.abs(Recording.length-((bm.duration or 0)*1000)), sqlalchemy.desc(stmt))\
+                       .limit(2)
+            recs = q.all()
+            if len(recs) > 0:
+                bm.recording = recs[0]
                 matched += 1
-                bm.state = Beatmap.State.MATCHED_WITH_STRING
+                if len(recs) == 1:
+                    bm.state = Beatmap.State.MATCHED_WITH_STRING
+                else:
+                    bm.state = Beatmap.State.MATCHED_WITH_STRING_MULTIPLE
             else:
                 bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
             total += 1
@@ -305,16 +309,22 @@ def generate_fingerprint():
             .filter(Beatmap.external_site.has(BeatSite.short_name == 'bs'))\
             .order_by(Beatmap.last_checked)\
             .first()
-        '''if bm is None and session.query(Beatmap)\
+        if bm is None and session.query(Beatmap)\
                                  .filter(Beatmap.state == Beatmap.State.HAS_FINGERPRINT)\
                                  .count() == 0:
             # After all songs have a match, go back and get higher-quality
             # matches with fingerprints
             bm = session.query(Beatmap)\
-                 .filter(Beatmap.state == Beatmap.State.MATCHED_WITH_STRING)\
+                 .filter(Beatmap.state == Beatmap.State.MATCHED_WITH_STRING_MULTIPLE)\
                  .filter(Beatmap.external_site.has(BeatSite.short_name == 'bs'))\
                  .order_by(Beatmap.last_checked)\
-                 .first()'''
+                 .first()
+            if bm is None:
+                bm = session.query(Beatmap)\
+                     .filter(Beatmap.state == Beatmap.State.MATCHED_WITH_STRING)\
+                     .filter(Beatmap.external_site.has(BeatSite.short_name == 'bs'))\
+                     .order_by(Beatmap.last_checked)\
+                     .first()
         if bm is None:
             session.remove()
             return

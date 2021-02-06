@@ -174,3 +174,6 @@ msgstr ""
 msgid "State.NO_MATCH"
 msgstr ""
 
+msgid "State.MATCHED_WITH_STRING_MULTIPLE"
+msgstr ""
+
