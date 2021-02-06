@@ -421,7 +421,11 @@ def lookup_fingerprint():
                     "No matches for beatmap {} track {}".format(
                         bm.id, bm.track_id))
             elif len(track['recordings']) == 1:
-                bm.recording_gid = track['recordings'][0]['id']
+                gid = track['recordings'][0]['id']
+                redir = session.query(RecordingGIDRedirect).filter(RecordingGIDRedirect.gid==gid).one_or_none()
+                if redir is not None:
+                    gid = redir.redirect.gid
+                bm.recording_gid = gid
                 bm.state = Beatmap.State.MATCHED_WITH_FINGERPRINT
                 db.app.logger.info(
                     "Matched beatmap {} with recording {}".format(
