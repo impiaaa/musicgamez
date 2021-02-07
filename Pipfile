@@ -14,9 +14,9 @@ pyacoustid = "*"
 beautifulsoup4 = "*"
 flask-babel = "*"
 Flask-Dance = "*"
+twisted = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
-

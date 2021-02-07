@@ -28,6 +28,7 @@ import apscheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.schedulers.twisted import TwistedScheduler
 import click
 from flask import Flask, render_template, request, url_for, redirect
 from flask.cli import with_appcontext
@@ -48,7 +49,7 @@ from werkzeug.exceptions import HTTPException
 
 metadata = MetaData(schema='public')
 db = SQLAlchemy(metadata=metadata)
-scheduler = APScheduler()
+scheduler = APScheduler(TwistedScheduler())
 babel = Babel()
 relationship_domain = Domain(domain="relationships")
 
@@ -160,7 +161,7 @@ def create_app(test_config=None):
             # processes instead of threads. Unfortunately, too much
             # infrastructure (APScheduler, SQLAlchemy connection pools) depend
             # on a shared memory space between threads.
-            'default': ThreadPoolExecutor()
+            #'default': ThreadPoolExecutor()
         },
         LANGUAGES=['en'],
         USER_AGENT="MusicGamez/0.1 ( https://musicgamez.info )",
