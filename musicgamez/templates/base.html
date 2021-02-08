@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ get_locale().language }}">
 <head>
 <meta charSet="utf-8" />
 <title>MusicGamez{% block title %}{% endblock %}</title>
@@ -13,7 +13,7 @@
 {% endblock %}
 </head>
 <body>
-<img src="{{ url_for('static', filename='images/beta.png') }}" class="beta"/>
+<img src="{{ url_for('static', filename='images/beta.png') }}" class="beta" alt="BETA"/>
 <nav>
 <h1><a href="/">MusicGamez</a></h1>
 <ul class="fa-ul" style="margin-left: 0">

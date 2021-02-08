@@ -21,7 +21,7 @@
 {% block content %}
 <div class="coverwall">
 {%- for coverart in covers -%}
-<img src="//coverartarchive.org/release/{{ coverart.release.gid }}/{{ coverart.id }}-250.jpg" />
+<img src="//coverartarchive.org/release/{{ coverart.release.gid }}/{{ coverart.id }}-250.jpg" alt="{{ coverart.release.name }}" />
 {%- endfor -%}
 </div>
 <h2><a href="https://musicbrainz.org/recording/{{ recording.gid }}">{{ recording|translate_recording }}</a></h2>

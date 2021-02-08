@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}: {{ beatmap.title }}{% endblock %}
 {% block content %}
-<h2>{{ beatmap.title }}</a></h2>
+<h2>{{ beatmap.title }}</h2>
 <h3>{{ beatmap.artist }}</h3>
 <script>
 var fmt = new Intl.DateTimeFormat('{{ get_locale().language }}', {dateStyle: "medium", timeStyle: "medium"});

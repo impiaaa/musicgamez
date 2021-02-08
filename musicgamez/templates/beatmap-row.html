@@ -1,15 +1,15 @@
 <tr>
-<td><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }}" srcset="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }},{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-48.png') }} 1.5x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-64.png') }} 2x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-96.png') }} 3x" class="bsite" /></a></td>
+<td><a href="{{ beatmap.external_site.url_base }}{{ beatmap.external_id }}{{ beatmap.external_site.url_suffix }}"><img src="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }}" srcset="{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-32.png') }},{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-48.png') }} 1.5x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-64.png') }} 2x,{{ url_for('static', filename='images/site/'+beatmap.external_site.short_name+'-96.png') }} 3x" alt="{{ beatmap.external_site.name }}" class="bsite" /></a></td>
 <td>{{ beatmap.choreographer }}</td>
-<td><time datetime="{{ beatmap.date.isoformat()+'Z' }}"><script>document.write(fmt.format(new Date("{{ beatmap.date.isoformat()+'Z' }}")))</script><noscript>{{ beatmap.date|datetimeformat }}</noscript></time></td>
+<td><time datetime="{{ beatmap.date.isoformat()[:23]+'Z' }}"><script>document.write(fmt.format(new Date("{{ beatmap.date.isoformat()[:23]+'Z' }}")))</script><noscript>{{ beatmap.date|datetimeformat }}</noscript></time></td>
 <td>{{ _("State."+beatmap.state.name) }}</td>
 <td>
 <form action="{{ url_for('main.beatmap', sitename=beatmap.external_site.short_name, extid=beatmap.external_id) }}" method="post">
 {% if beatmap.state == State.MATCHED_WITH_STRING or beatmap.state == State.NO_MATCH %}
-<button type="submit" name="action" value="rematch">{{ _("Request re-match") }}</submit>
+<button type="submit" name="action" value="rematch">{{ _("Request re-match") }}</button>
 {% endif %}
 {% if beatmap.recording_gid %}
-<button type="submit" name="action" value="incorrect">{{ _("Report incorrect match") }}</submit>
+<button type="submit" name="action" value="incorrect">{{ _("Report incorrect match") }}</button>
 {% endif %}
 </form>
 </td>
