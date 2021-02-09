@@ -74,7 +74,7 @@ def latest(page=1):
 
 
 @bp.route("/browse/genre")
-@cache_for(hours=1)
+@cache(max_age=1*60*60, public=True)
 def genres():
     g = db.session.query(Genre.name, func.count(Beatmap.id))\
         .select_from(Genre)\
@@ -283,7 +283,7 @@ def mycollection():
 
 
 @bp.route("/recording/<uuid:gid>")
-@cache_for(minutes=1)
+@cache(max_age=1*60, public=True)
 def recording(gid):
     rec = db.session.query(Recording).filter(Recording.gid == str(gid)).one()
     covers = db.session.query(CoverArt)\
@@ -370,7 +370,7 @@ def recording(gid):
 
 
 @bp.route("/beatmap/<sitename>/<extid>", methods={'GET', 'POST'})
-@cache_for(minutes=1)
+@cache(max_age=1*60, public=True)
 def beatmap(sitename, extid):
     site = db.session.query(BeatSite).filter(
         BeatSite.short_name == sitename).one()
@@ -410,7 +410,7 @@ def beatmap(sitename, extid):
 
 
 @bp.route("/lookup", methods={'GET', 'POST'})
-@cache_for(hours=1)
+@cache(max_age=1*60, public=True)
 def lookup():
     if request.method == 'POST':
         if 'exturl' in request.form:
@@ -441,6 +441,6 @@ def coffee():
 
 
 @bp.route("/about")
-@cache_for(hours=3)
+@cache(max_age=3*60*60, public=True)
 def about():
     return render_template("about.html")
