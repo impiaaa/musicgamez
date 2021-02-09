@@ -10,6 +10,7 @@ click==7.1.2
 constantly==15.1.0
 flask-apscheduler==1.11.0
 flask-babel==2.0.0
+flask-cachecontrol==0.2.0
 flask-dance==3.2.0
 flask-sqlalchemy==2.4.4
 flask==1.1.2

@@ -34,6 +34,7 @@ from flask import Flask, render_template, request, url_for, redirect
 from flask.cli import with_appcontext
 from flask_apscheduler import APScheduler
 from flask_babel import _, Babel, Domain, get_locale
+from flask_cachecontrol import FlaskCacheControl
 from flask_dance.consumer import OAuth2ConsumerBlueprint, OAuth2Session
 from flask_dance.consumer.storage import MemoryStorage
 from flask_sqlalchemy import SQLAlchemy
@@ -52,6 +53,7 @@ db = SQLAlchemy(metadata=metadata)
 scheduler = APScheduler(TwistedScheduler())
 babel = Babel()
 relationship_domain = Domain(domain="relationships")
+flask_cache_control = FlaskCacheControl()
 
 
 class OAuth2SessionWithUserAgent(OAuth2Session):
@@ -209,6 +211,7 @@ def create_app(test_config=None):
         from musicgamez.main import tasks
 
     babel.init_app(app)
+    flask_cache_control.init_app(app)
 
     app.register_blueprint(oauth_osu, url_prefix="/oauth")
     app.register_blueprint(oauth_musicbrainz, url_prefix="/oauth")

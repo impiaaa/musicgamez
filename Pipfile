@@ -15,6 +15,7 @@ beautifulsoup4 = "*"
 flask-babel = "*"
 Flask-Dance = "*"
 twisted = "*"
+flask-cachecontrol = "*"
 
 [dev-packages]
 

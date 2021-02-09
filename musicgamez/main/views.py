@@ -8,6 +8,7 @@ from flask import request
 from flask import session
 from flask import url_for
 from flask_babel import _
+from flask_cachecontrol import cache, cache_for
 from flask_sqlalchemy import Pagination
 import json
 from mbdata.models import *
@@ -67,11 +68,13 @@ def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
 @bp.route("/", methods={'GET', 'POST'})
 @bp.route("/latest", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/latest/<int:page>", methods={'GET', 'POST'})
+@cache_for(minutes=7.5)
 def latest(page=1):
     return recordinglist(db.session.query(MiniRecordingView), page, _("Latest"))
 
 
 @bp.route("/browse/genre")
+@cache_for(hours=1)
 def genres():
     g = db.session.query(Genre.name, func.count(Beatmap.id))\
         .select_from(Genre)\
@@ -93,6 +96,7 @@ def genres():
 
 @bp.route("/tag/<tag>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/tag/<tag>/<int:page>", methods={'GET', 'POST'})
+@cache_for(minutes=7.5)
 def tag(tag, page=1):
     return recordinglist(db.session.query(MiniRecordingView)
                          .join(Track)
@@ -107,6 +111,7 @@ def tag(tag, page=1):
 
 @bp.route("/release/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/release/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+@cache_for(minutes=7.5)
 def release(gid, page=1):
     r = db.session.query(Release).filter(Release.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
@@ -118,6 +123,7 @@ def release(gid, page=1):
 
 @bp.route("/artist/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/artist/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+@cache_for(minutes=7.5)
 def artist(gid, page=1):
     a = db.session.query(Artist).filter(Artist.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
@@ -129,6 +135,7 @@ def artist(gid, page=1):
 
 @bp.route("/label/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/label/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+@cache_for(minutes=7.5)
 def label(gid, page=1):
     l = db.session.query(Label).filter(Label.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
@@ -140,6 +147,7 @@ def label(gid, page=1):
 
 @bp.route("/release-group/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/release-group/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+@cache_for(minutes=7.5)
 def release_group(gid, page=1):
     r = db.session.query(ReleaseGroup).filter(ReleaseGroup.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
@@ -151,6 +159,7 @@ def release_group(gid, page=1):
 
 @bp.route("/collection/<uuid:gid>", defaults={ "page": 1}, methods={'GET', 'POST'})
 @bp.route("/collection/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
+@cache(private=True)
 def collection(gid, page=1):
     from musicgamez import oauth_musicbrainz
     response = oauth_musicbrainz.session.get("collection/{}?fmt=json".format(gid))
@@ -198,6 +207,7 @@ def spotifylist(name, link, entities, page, count):
 
 
 @bp.route("/spotify/playlist/<id>")
+@cache(private=True)
 def spotify_playlist(id):
     from musicgamez import oauth_spotify
     response = oauth_spotify.session.get("playlists/{}?fields=name,external_urls,tracks.items(track(external_ids,external_urls,name,artists))".format(id))
@@ -210,6 +220,7 @@ def spotify_playlist(id):
 
 @bp.route("/spotify/tracks", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/spotify/tracks/<int:page>", methods={'GET', 'POST'})
+@cache(private=True)
 def spotify_tracks(page=1):
     from musicgamez import oauth_spotify
     response = oauth_spotify.session.get("me/tracks?limit={}&offset={}&fields=items(track(external_ids,external_urls,name,artists))".format(db.app.config["PERPAGE"], db.app.config["PERPAGE"]*(page-1)))
@@ -222,6 +233,7 @@ def spotify_tracks(page=1):
 
 @bp.route("/spotify/albums", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/spotify/albums/<int:page>", methods={'GET', 'POST'})
+@cache(private=True)
 def spotify_albums(page=1):
     from musicgamez import oauth_spotify
     response = oauth_spotify.session.get("me/albums?limit={}&offset={}&fields=items(album(external_ids,external_urls,name,artists))".format(db.app.config["PERPAGE"], db.app.config["PERPAGE"]*(page-1)))
@@ -237,6 +249,7 @@ def spotify_albums(page=1):
 
 
 @bp.route("/collection")
+@cache(private=True)
 def mycollection():
     from musicgamez import oauth_musicbrainz, oauth_spotify
     if oauth_musicbrainz.session.authorized:
@@ -270,6 +283,7 @@ def mycollection():
 
 
 @bp.route("/recording/<uuid:gid>")
+@cache_for(minutes=1)
 def recording(gid):
     rec = db.session.query(Recording).filter(Recording.gid == str(gid)).one()
     covers = db.session.query(CoverArt)\
@@ -356,6 +370,7 @@ def recording(gid):
 
 
 @bp.route("/beatmap/<sitename>/<extid>", methods={'GET', 'POST'})
+@cache_for(minutes=1)
 def beatmap(sitename, extid):
     site = db.session.query(BeatSite).filter(
         BeatSite.short_name == sitename).one()
@@ -395,6 +410,7 @@ def beatmap(sitename, extid):
 
 
 @bp.route("/lookup", methods={'GET', 'POST'})
+@cache_for(hours=1)
 def lookup():
     if request.method == 'POST':
         if 'exturl' in request.form:
@@ -425,5 +441,6 @@ def coffee():
 
 
 @bp.route("/about")
+@cache_for(hours=3)
 def about():
     return render_template("about.html")
