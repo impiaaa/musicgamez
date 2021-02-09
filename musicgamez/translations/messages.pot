@@ -1,4 +1,4 @@
-# Translations template for MusicGamez.
+﻿# Translations template for MusicGamez.
 # Copyright (C) 2021 ORGANIZATION
 # This file is distributed under the same license as the MusicGamez project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
@@ -60,7 +60,8 @@ msgid ""
 "Music metadata by <a href=\"https://musicbrainz.org/\">MusicBrainz</a> "
 "contributors is licensed under <a "
 "href=\"https://creativecommons.org/licenses/by-nc-sa/3.0/\">CC BY-NC-SA "
-"3.0</a>"
+"3.0</a>. MusicGamez is not affiliated with or endorsed by MusicBrainz or"
+" the MetaBrainz Foundation."
 msgstr ""
 
 #: musicgamez/templates/beatmap-row.html:9
