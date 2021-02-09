@@ -1,6 +1,7 @@
 from flask import abort
 from flask import Blueprint
 from flask import g
+from flask import make_response
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -21,22 +22,30 @@ bp = Blueprint("main", __name__)
 
 
 def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
+    if "game" in session: del session["game"]
+    if "streamsafe" in session: del session["streamsafe"]
+    resp = make_response()
+    game = request.cookies.get("game", None)
+    streamsafe = bool(int(request.cookies.get("streamsafe", 0)))
     if request.method == "POST":
         if "game" in request.form:
             if request.form["game"] == "":
-                if "game" in session:
-                    del session["game"]
+                game = None
+                resp.set_cookie("game", max_age=0)
             else:
-                session["game"] = request.form["game"]
-        session["streamsafe"] = bool(request.form.get("streamsafe", False))
-    if session.get("streamsafe", False):
+                game = request.form["game"]
+                resp.set_cookie("game", game)
+        streamsafe = bool(request.form.get("streamsafe", False))
+        resp.set_cookie("streamsafe", str(int(streamsafe)))
+    if streamsafe:
         q = q.filter(expression.or_(MiniRecordingView.license_url != None,
             MiniRecordingView.permission_url != None,
             MiniRecordingView.selfpublish))
-    if session.get("game", False):
-        site = db.session.query(BeatSite).filter(BeatSite.short_name==session["game"]).one_or_none()
+    if game:
+        site = db.session.query(BeatSite).filter(BeatSite.short_name==game).one_or_none()
         if site is None:
-            del session["game"]
+            game = None
+            resp.set_cookie("game", max_age=0)
         else:
             q = q.join(Beatmap).filter(Beatmap.external_site==site)
     q = q.order_by(MiniRecordingView.date.desc())
@@ -46,11 +55,13 @@ def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
         items = q.items
     else:
         items = q
-    return render_template("recordinglist.html", recordings=items,
+    resp.data = render_template("recordinglist.html", recordings=items,
         has_next=paginate.has_next, has_prev=paginate.has_prev,
         next_num=paginate.next_num, prev_num=paginate.prev_num,
         pagetitle=pagetitle, pagelink=pagelink,
-        games=db.session.query(BeatSite))
+        games=db.session.query(BeatSite), streamsafe=streamsafe,
+        filtergame=game)
+    return resp
 
 
 @bp.route("/", methods={'GET', 'POST'})
