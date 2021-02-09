@@ -27,7 +27,14 @@ def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
     if "streamsafe" in session: del session["streamsafe"]
     resp = make_response()
     game = request.cookies.get("game", None)
-    streamsafe = bool(int(request.cookies.get("streamsafe", 0)))
+    if "streamsafe" in request.cookies:
+        if str(request.cookies["streamsafe"]).isdigit():
+            streamsafe = bool(int(request.cookies["streamsafe"]))
+        else:
+            resp.set_cookie("streamsafe", max_age=0)
+            streamsafe = None
+    else:
+        streamsafe = None
     if request.method == "POST":
         if "game" in request.form:
             if request.form["game"] == "":
@@ -35,9 +42,9 @@ def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
                 resp.set_cookie("game", max_age=0)
             else:
                 game = request.form["game"]
-                resp.set_cookie("game", game)
-        streamsafe = bool(request.form.get("streamsafe", False))
-        resp.set_cookie("streamsafe", str(int(streamsafe)))
+                resp.set_cookie("game", game, samesite='lax')
+        streamsafe = request.form.get("streamsafe") == "on"
+        resp.set_cookie("streamsafe", str(int(streamsafe)), samesite='lax')
     if streamsafe:
         q = q.filter(expression.or_(MiniRecordingView.license_url != None,
             MiniRecordingView.permission_url != None,
@@ -68,7 +75,7 @@ def recordinglist(q, page, pagetitle, pagelink=None, paginate=None):
 @bp.route("/", methods={'GET', 'POST'})
 @bp.route("/latest", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/latest/<int:page>", methods={'GET', 'POST'})
-@cache_for(minutes=7.5)
+@cache(s_maxage=7.5*60)
 def latest(page=1):
     return recordinglist(db.session.query(MiniRecordingView), page, _("Latest"))
 
@@ -96,7 +103,7 @@ def genres():
 
 @bp.route("/tag/<tag>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/tag/<tag>/<int:page>", methods={'GET', 'POST'})
-@cache_for(minutes=7.5)
+@cache(s_maxage=7.5*60)
 def tag(tag, page=1):
     return recordinglist(db.session.query(MiniRecordingView)
                          .join(Track)
@@ -111,7 +118,7 @@ def tag(tag, page=1):
 
 @bp.route("/release/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/release/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
-@cache_for(minutes=7.5)
+@cache(s_maxage=7.5*60)
 def release(gid, page=1):
     r = db.session.query(Release).filter(Release.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
@@ -123,7 +130,7 @@ def release(gid, page=1):
 
 @bp.route("/artist/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/artist/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
-@cache_for(minutes=7.5)
+@cache(s_maxage=7.5*60)
 def artist(gid, page=1):
     a = db.session.query(Artist).filter(Artist.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
@@ -135,7 +142,7 @@ def artist(gid, page=1):
 
 @bp.route("/label/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/label/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
-@cache_for(minutes=7.5)
+@cache(s_maxage=7.5*60)
 def label(gid, page=1):
     l = db.session.query(Label).filter(Label.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)
@@ -147,7 +154,7 @@ def label(gid, page=1):
 
 @bp.route("/release-group/<uuid:gid>", defaults={"page": 1}, methods={'GET', 'POST'})
 @bp.route("/release-group/<uuid:gid>/<int:page>", methods={'GET', 'POST'})
-@cache_for(minutes=7.5)
+@cache(s_maxage=7.5*60)
 def release_group(gid, page=1):
     r = db.session.query(ReleaseGroup).filter(ReleaseGroup.gid == str(gid)).one()
     return recordinglist(db.session.query(MiniRecordingView)

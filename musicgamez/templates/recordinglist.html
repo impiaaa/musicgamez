@@ -2,8 +2,8 @@
 {% block title %}: {{ pagetitle }}{% endblock %}
 {% block content %}
 <form class="filters" action="{{ url_for(request.endpoint, **request.view_args) }}" method="post">
-<input type="checkbox" name="streamsafe" id="streamsafe" title="{{ _("Only show stream-safe music") }}" onchange="this.form.submit()" {% if streamsafe %}checked{% endif %}/><label for="streamsafe" title="{{ _("Only show stream-safe music") }}"><i class="fa fa-television" aria-hidden="true"></i></label>
-<select name="game" title="{{ _("Game filter") }}" onchange="this.form.submit()">
+<input type="checkbox" name="streamsafe" id="streamsafe" title="{{ _("Only show stream-safe music") }}" onchange="document.cookie='streamsafe='+Number(this.checked)+';samesite=lax;path=/'; location.reload()" {% if streamsafe %}checked{% endif %}/><label for="streamsafe" title="{{ _("Only show stream-safe music") }}"><i class="fa fa-television" aria-hidden="true"></i></label>
+<select name="game" title="{{ _("Game filter") }}" onchange="document.cookie='game='+this.value+(this.value?'':';max-age=0')+';samesite=lax;path=/'; location.reload()">
 <option value="" {% if not filtergame %}selected{% endif %}></option>
 {% for game in games %}
 <option value="{{ game.short_name }}" {% if filtergame==game.short_name %}selected{% endif %}>{{ game.name }}</option>
