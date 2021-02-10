@@ -1,4 +1,4 @@
-﻿# Translations template for MusicGamez.
+# Translations template for MusicGamez.
 # Copyright (C) 2021 ORGANIZATION
 # This file is distributed under the same license as the MusicGamez project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MusicGamez VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-01-18 18:22-0800\n"
+"POT-Creation-Date: 2021-02-10 08:50-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,59 +17,56 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.9.0\n"
 
-#: musicgamez/__init__.py:57
+#: musicgamez/__init__.py:146
 msgid ""
 "The requested entity was not found. If you entered the URL manually "
 "please check your spelling and try again."
 msgstr ""
 
-#: musicgamez/main/views.py:33
+#: musicgamez/main/views.py:80
 msgid "Latest"
 msgstr ""
 
-#: musicgamez/templates/base.html:14
-msgid "Browse"
+#: musicgamez/main/views.py:229 musicgamez/templates/mycollection.html:21
+msgid "Saved tracks"
 msgstr ""
 
-#: musicgamez/templates/base.html:16
-msgid "Artist"
-msgstr ""
-
-#: musicgamez/templates/base.html:17
-msgid "Genre"
-msgstr ""
-
-#: musicgamez/templates/base.html:20
-msgid "Tools"
-msgstr ""
-
-#: musicgamez/templates/base.html:22
-msgid "My Collection"
+#: musicgamez/main/views.py:246 musicgamez/templates/mycollection.html:20
+msgid "Saved albums"
 msgstr ""
 
 #: musicgamez/templates/base.html:23
+msgid "Browse"
+msgstr ""
+
+#: musicgamez/templates/base.html:24
+msgid "Tools"
+msgstr ""
+
+#: musicgamez/templates/base.html:26 musicgamez/templates/mycollection.html:2
+#: musicgamez/templates/mycollection.html:4
+msgid "My Collection"
+msgstr ""
+
+#: musicgamez/templates/base.html:27
 msgid "Lookup"
 msgstr ""
 
-#: musicgamez/templates/base.html:26
+#: musicgamez/templates/base.html:30
 msgid "About/Help"
 msgstr ""
 
-#: musicgamez/templates/base.html:38
+#: musicgamez/templates/base.html:43
 msgid ""
 "Music metadata by <a href=\"https://musicbrainz.org/\">MusicBrainz</a> "
 "contributors is licensed under <a "
 "href=\"https://creativecommons.org/licenses/by-nc-sa/3.0/\">CC BY-NC-SA "
-"3.0</a>. MusicGamez is not affiliated with or endorsed by MusicBrainz or"
-" the MetaBrainz Foundation."
+"3.0</a>. MusicGamez is not affiliated with or endorsed by MusicBrainz or "
+"the MetaBrainz Foundation."
 msgstr ""
 
 #: musicgamez/templates/beatmap-row.html:9
 msgid "Request re-match"
-msgstr ""
-
-#: musicgamez/templates/beatmap-row.html:12
-msgid "Report incorrect match"
 msgstr ""
 
 #: musicgamez/templates/genres.html:4
@@ -88,66 +85,98 @@ msgstr ""
 msgid "Look up by URL"
 msgstr ""
 
-#: musicgamez/templates/recording.html:15
+#: musicgamez/templates/mycollection.html:7
+#: musicgamez/templates/mycollection.html:18
+msgid "Log out"
+msgstr ""
+
+#: musicgamez/templates/mycollection.html:14
+msgid "Log in with MusicBrainz"
+msgstr ""
+
+#: musicgamez/templates/mycollection.html:27
+msgid "Log in with Spotify"
+msgstr ""
+
+#: musicgamez/templates/recording.html:9
+#, python-format
+msgid "%(count)s rhythm game map"
+msgid_plural "%(count)s rhythm game maps"
+msgstr[0] ""
+msgstr[1] ""
+
+#: musicgamez/templates/recording.html:33
 msgid "Recording licensed under Creative Commons (click for terms)"
 msgstr ""
 
-#: musicgamez/templates/recording.html:17
+#: musicgamez/templates/recording.html:35
 msgid "Recording available for licensing (click for terms)"
 msgstr ""
 
-#: musicgamez/templates/recording.html:26
+#: musicgamez/templates/recording.html:44
 #, python-format
 msgid ""
 "Release \"%(releasename)s\" licensed under Creative Commons (click for "
 "terms)"
 msgstr ""
 
-#: musicgamez/templates/recording.html:28
+#: musicgamez/templates/recording.html:46
 #, python-format
 msgid "Release \"%(releasename)s\" available for licensing (click for terms)"
 msgstr ""
 
-#: musicgamez/templates/recording.html:35
+#: musicgamez/templates/recording.html:53
 #, python-format
 msgid "%(artist)s has given permission for streaming (click for conditions)"
 msgstr ""
 
-#: musicgamez/templates/recording.html:40
+#: musicgamez/templates/recording.html:58
 #, python-format
 msgid "%(label)s has given permission for streaming (click for conditions)"
 msgstr ""
 
-#: musicgamez/templates/recording.html:44
+#: musicgamez/templates/recording.html:62
 msgid "Not released under a label"
 msgstr ""
 
-#: musicgamez/templates/recordinglist.html:12
+#: musicgamez/templates/recordinglist.html:5
+msgid "Only show stream-safe music"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:6
+msgid "Game filter"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:13
+msgid "Submit"
+msgstr ""
+
+#: musicgamez/templates/recordinglist.html:24
 msgid "Licensed under Creative Commons (click for terms)"
 msgstr ""
 
-#: musicgamez/templates/recordinglist.html:14
+#: musicgamez/templates/recordinglist.html:26
 msgid "Available for licensing (click for terms)"
 msgstr ""
 
-#: musicgamez/templates/recordinglist.html:17
+#: musicgamez/templates/recordinglist.html:29
 msgid "Artist or label has given permission for streaming (click for conditions)"
 msgstr ""
 
-#: musicgamez/templates/recordinglist.html:19
+#: musicgamez/templates/recordinglist.html:31
 msgid "Not published under a label"
 msgstr ""
 
-#: musicgamez/templates/recordinglist.html:25
+#: musicgamez/templates/recordinglist.html:37
 #, python-format
 msgid "Mapped for %(game)s by %(choreographer)s"
 msgstr ""
 
-#: musicgamez/templates/recordinglist.html:34
+#: musicgamez/templates/recordinglist.html:46
 msgid "Later"
 msgstr ""
 
-#: musicgamez/templates/recordinglist.html:37
+#: musicgamez/templates/recordinglist.html:49
 msgid "Earlier"
 msgstr ""
 
