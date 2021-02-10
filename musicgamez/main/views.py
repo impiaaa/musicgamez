@@ -83,22 +83,13 @@ def latest(page=1):
 @bp.route("/browse/genre")
 @cache(max_age=1*60*60, public=True)
 def genres():
-    g = db.session.query(Genre.name, func.count(Beatmap.id))\
-        .select_from(Genre)\
-        .join(Tag, Tag.name == Genre.name)\
-        .join(ReleaseTag)\
-        .join(Release)\
-        .join(Medium)\
-        .join(Track)\
-        .join(Recording)\
-        .join(Beatmap)\
-        .group_by(Genre.name)\
+    genres = db.session.query(GenreCloud)\
         .order_by(func.random())\
         .all()
-    mn = min(g, key=lambda a: a[1])[1]
-    mx = max(g, key=lambda a: a[1])[1]
-    h = [(genre, (64 * (count - mn) / (mx - mn)) + 8) for genre, count in g]
-    return render_template("genres.html", genres=h)
+    mn = min([genre.count for genre in genres])
+    mx = max([genre.count for genre in genres])
+    names_and_sizes = [(genre.name, (64 * (genre.count - mn) / (mx - mn)) + 8) for genre in genres]
+    return render_template("genres.html", genres=names_and_sizes)
 
 
 @bp.route("/tag/<tag>", defaults={"page": 1}, methods={'GET', 'POST'})

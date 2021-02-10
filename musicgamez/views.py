@@ -21,9 +21,11 @@ class DropView(DDLElement):
 
 @compiler.compiles(CreateView)
 def compile(element, compiler, **kw):
-    return "CREATE %s%sVIEW %s AS %s" % (
+    return "CREATE %s%s%sVIEW %s%s AS %s" % (
+        "OR REPLACE " if not element.material else "",
         "TEMPORARY " if element.temporary else "",
         "MATERIALIZED " if element.material else "",
+        "IF NOT EXISTS " if element.material else "",
         element.name,
         compiler.sql_compiler.process(element.selectable, literal_binds=True))
 

@@ -236,15 +236,53 @@ class MiniRecordingView(db.Model):
     id_index = db.Index('ix_public_mini_recording_view_id', __table__.c.id, unique=True)
     gid_index = db.Index('ix_public_mini_recording_view_gid', __table__.c.gid, unique=True)
 
-
 event.listen(
     db.metadata,
     'after_create',
-    DDL("CREATE UNIQUE INDEX ix_public_mini_recording_view_id ON mini_recording_view (id)")
+    DDL("CREATE UNIQUE INDEX IF NOT EXISTS ix_public_mini_recording_view_id ON mini_recording_view (id)")
 )
 
 event.listen(
     db.metadata,
     'after_create',
-    DDL("CREATE UNIQUE INDEX ix_public_mini_recording_view_gid ON mini_recording_view (gid)")
+    DDL("CREATE UNIQUE INDEX IF NOT EXISTS ix_public_mini_recording_view_gid ON mini_recording_view (gid)")
+)
+
+
+class GenreCloud(db.Model):
+    __table__ = view(
+        "genre_cloud",
+        db.metadata,
+        select([
+            Genre.id.label("id"),
+            Genre.gid.label("gid"),
+            Genre.name.label("name"),
+            func.count(Beatmap.id).label("count")
+        ])\
+        .select_from(
+            Genre.__table__
+            .join(Tag, Tag.name == Genre.name)
+            .join(ReleaseTag)
+            .join(Release)
+            .join(Medium)
+            .join(Track)
+            .join(Recording)
+            .join(Beatmap)
+        )
+        .group_by(Genre.id, Genre.gid, Genre.name),
+        material=True
+    )
+    id_index = db.Index('ix_public_genre_cloud_view_id', __table__.c.id, unique=True)
+    gid_index = db.Index('ix_public_genre_cloud_view_gid', __table__.c.gid, unique=True)
+
+event.listen(
+    db.metadata,
+    'after_create',
+    DDL("CREATE UNIQUE INDEX IF NOT EXISTS ix_public_genre_cloud_id ON genre_cloud (id)")
+)
+
+event.listen(
+    db.metadata,
+    'after_create',
+    DDL("CREATE UNIQUE INDEX IF NOT EXISTS ix_public_genre_cloud_gid ON genre_cloud (gid)")
 )

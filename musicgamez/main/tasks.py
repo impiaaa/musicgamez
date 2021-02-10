@@ -482,3 +482,12 @@ def update_mini_recording_view():
         session.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY mini_recording_view")
         session.commit()
         session.remove()
+
+
+@scheduler.task('interval', id='update_genre_cloud', minutes=60)
+def update_genre_cloud():
+    with db.app.app_context():
+        session = db.create_scoped_session()
+        session.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY genre_cloud")
+        session.commit()
+        session.remove()
