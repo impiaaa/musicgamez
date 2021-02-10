@@ -393,11 +393,11 @@ def beatmap(sitename, extid):
             if bm.state != Beatmap.State.MATCHED_WITH_STRING:
                 abort(400)
             bm.state = Beatmap.State.WAITING_FOR_FINGERPRINT
-        elif request.form['action'] == 'incorrect':
-            # TODO could be a vector for abuse
-            if bm.recording_gid is None:
-                abort(400)
-            bm.recording_gid = None
+        #elif request.form['action'] == 'incorrect':
+        #    # TODO decide to restore
+        #    if bm.recording_gid is None:
+        #        abort(400)
+        #    bm.recording_gid = None
         else:
             abort(400)
         db.session.commit()

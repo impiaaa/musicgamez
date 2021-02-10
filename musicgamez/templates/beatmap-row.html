@@ -8,9 +8,11 @@
 {% if beatmap.state == State.MATCHED_WITH_STRING or beatmap.state == State.NO_MATCH %}
 <button type="submit" name="action" value="rematch">{{ _("Request re-match") }}</button>
 {% endif %}
+{#
 {% if beatmap.recording_gid %}
 <button type="submit" name="action" value="incorrect">{{ _("Report incorrect match") }}</button>
 {% endif %}
+#}
 </form>
 </td>
 </tr>
