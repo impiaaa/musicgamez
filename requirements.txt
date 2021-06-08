@@ -1,3 +1,4 @@
+-i https://pypi.python.org/simple/
 apscheduler==3.7.0
 attrs==21.2.0
 audioread==2.1.9
