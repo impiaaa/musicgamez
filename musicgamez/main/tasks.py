@@ -29,7 +29,7 @@ def urlopen_with_ua(u, **kwargs):
 
 def fetch_beatsaber_single(site, session, gametrack_or_id):
     if isinstance(gametrack_or_id, str):
-        gametrack = json.load(urlopen_with_ua("https://beatsaver.com/api/maps/detail/" + gametrack_or_id))
+        gametrack = json.load(urlopen_with_ua("https://beatsaver.com/api/maps/id/" + gametrack_or_id))
     else:
         gametrack = gametrack_or_id
     meta = gametrack['metadata']
@@ -41,13 +41,13 @@ def fetch_beatsaber_single(site, session, gametrack_or_id):
         artistName = meta['songAuthorName']
 
     q = session.query(Beatmap).filter(Beatmap.external_site == site,
-                                      Beatmap.external_id == gametrack['key'])
+                                      Beatmap.external_id == gametrack['id'])
     if q.count() > 0:
         return
 
     bm = Beatmap(artist=artistName,
                  title=songName,
-                 external_id=gametrack['key'],
+                 external_id=gametrack['id'],
                  external_site=site,
                  choreographer=mapperName,
                  date=gametrack['uploaded'],
@@ -86,12 +86,13 @@ def fetch_beatsaber():
 
         site = session.query(BeatSite).filter(
             BeatSite.short_name == 'bs').one()
+        before = None
 
         for page in range(10):
-            response = json.load(
-                urlopen_with_ua(
-                    "https://beatsaver.com/api/maps/latest/" +
-                    str(page)))
+            url = "https://beatsaver.com/api/maps/latest?automapper=false"
+            if before is not None:
+                url += "&before="+before
+            response = json.load(urlopen_with_ua(url))
 
             lastPage = False
             for gametrack in response['docs']:
@@ -99,6 +100,7 @@ def fetch_beatsaber():
                     lastPage = True
                     break
                 imported += 1
+                before = gametrack['uploaded']
 
             if lastPage:
                 break
@@ -334,7 +336,11 @@ def generate_fingerprint():
                 bm.id))
         try:
             if bm.external_site.short_name == 'bs':
-                dl_url = "https://beatsaver.com/api/download/key/" + bm.external_id
+                if bm.extra is not None and 'versions' in bm.extra:
+                    mapinfo = bm.extra
+                else:
+                    mapinfo = json.load(urlopen_with_ua("https://beatsaver.com/api/maps/id/" + bm.external_id))
+                dl_url = mapinfo['versions'][0]['downloadURL']
             elif bm.external_site.short_name == 'osu':
                 dl_url = "https://osu.ppy.sh/api/v2/beatmapsets/" + bm.external_id + "/download"
             else:

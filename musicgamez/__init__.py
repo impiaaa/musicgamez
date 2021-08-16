@@ -338,13 +338,15 @@ def fetch_osu_command():
 def fetch_beatsaber_single_command(id):
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_beatsaber_single, match_with_string, urlopen_with_ua
+    from musicgamez.main.models import BeatSite
     import json
     session = db.create_scoped_session()
     gametrack = json.load(
         urlopen_with_ua(
-            "https://beatsaver.com/api/maps/detail/" +
+            "https://beatsaver.com/api/maps/id/" +
             id))
-    fetch_beatsaber_single(session, gametrack)
+    site = session.query(BeatSite).filter(BeatSite.short_name == 'bs').one()
+    fetch_beatsaber_single(site, session, gametrack)
     try:
         scheduler.shutdown()
     except apscheduler.schedulers.SchedulerNotRunningError:

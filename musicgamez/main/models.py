@@ -25,7 +25,7 @@ class BeatSite(db.Model):
 def insert_basic(target, connection, **kw):
     db.session.add(BeatSite(name='Beat Saber',
                             short_name='bs',
-                            url_base='https://beatsaver.com/beatmap/'))
+                            url_base='https://beatsaver.com/maps/'))
     db.session.add(BeatSite(name='osu!',
                             short_name='osu',
                             url_base='https://osu.ppy.sh/beatmapsets/'))
