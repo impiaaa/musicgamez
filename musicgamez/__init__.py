@@ -149,9 +149,7 @@ def entity_not_found(e):
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get("SECRET_KEY", "dev"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        SCHEDULER_API_ENABLED=True,
         SCHEDULER_EXECUTORS={
             # This is going to bite me later. Threads in Python are bound by the
             # Global Interpreter Lock, which means threads can only be preempted
@@ -226,9 +224,12 @@ def create_app(test_config=None):
     app.cli.add_command(import_partybus_stream_permission)
     app.cli.add_command(import_creatorhype_stream_permission)
     app.cli.add_command(fetch_beatsaber_command)
-    app.cli.add_command(fetch_beastsaber_command)
-    app.cli.add_command(fetch_beatsaber_single_command)
     app.cli.add_command(fetch_osu_command)
+    app.cli.add_command(fetch_beatsaber_single_command)
+    app.cli.add_command(fetch_beastsaber_command)
+    app.cli.add_command(create_solr_home)
+    app.cli.add_command(export_solr_triggers)
+    app.cli.add_command(reindex_solr)
 
     return app
 
@@ -283,12 +284,12 @@ def init_db():
 @click.command("init-db")
 @with_appcontext
 def init_db_command():
-    """Clear existing data and create new tables."""
+    """Clear existing data and create new tables"""
     init_db()
     click.echo("Initialized the database.")
 
 
-@click.command("import-partybus-stream-permission")
+@click.command()
 @with_appcontext
 def import_partybus_stream_permission():
     """Import artist streaming permissions from Partybus's spreadsheet"""
@@ -296,7 +297,7 @@ def import_partybus_stream_permission():
     import_partybus_stream_permission()
 
 
-@click.command("import-creatorhype-stream-permission")
+@click.command()
 @with_appcontext
 def import_creatorhype_stream_permission():
     """Import artist streaming permissions from creatorhype.com's spreadsheet"""
@@ -307,7 +308,7 @@ def import_creatorhype_stream_permission():
 @click.command("fetch-beatsaber")
 @with_appcontext
 def fetch_beatsaber_command():
-    """Manually import maps from Beat Saber."""
+    """Manually import new maps from Beat Saber"""
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_beatsaber, match_with_string
     fetch_beatsaber()
@@ -321,7 +322,7 @@ def fetch_beatsaber_command():
 @click.command("fetch-osu")
 @with_appcontext
 def fetch_osu_command():
-    """Manually import maps from osu!."""
+    """Manually import new maps from osu!"""
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_osu, match_with_string
     fetch_osu()
@@ -333,9 +334,10 @@ def fetch_osu_command():
 
 
 @click.command("fetch-beatsaber-single")
-@click.option('-i', '--id')
+@click.argument('id')
 @with_appcontext
 def fetch_beatsaber_single_command(id):
+    """Manually import a specific Beat Saber map"""
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_beatsaber_single, match_with_string, urlopen_with_ua
     from musicgamez.main.models import BeatSite
@@ -353,10 +355,55 @@ def fetch_beatsaber_single_command(id):
         pass
     match_with_string()
 
+
 @click.command("fetch-beatsaber-dump")
 @with_appcontext
 def fetch_beastsaber_command():
+    """Import all Beat Saber maps"""
     scheduler.shutdown()
     from musicgamez.main.tasks import fetch_beatsaber_dump
     fetch_beatsaber_dump()
+
+
+@click.command()
+@click.argument("directory")
+def create_solr_home(directory):
+    """Set up a Solr configuration directory"""
+    import os
+    from . import search
+    import mbdata.search
+    mbdata.search.create_solr_home(directory)
+    # the schema XML that mbdata.search.create_solr_home creates is mostly fine,
+    # but this one more closely matches what MusicBrainz uses
+    open(os.path.join(directory, "musicbrainz", "conf", "schema.xml"), 'w').write(search.SEARCH_SCHEMA_XML)
+
+
+@click.command()
+@with_appcontext
+def export_solr_triggers():
+    """Add database triggers to automatically add updates to the Solr index queue"""
+    from . import search
+    import mbdata.search
+    # mbdata.search.export_triggers just prints all the commands, for piping to
+    # psql. but we have a database connection, we might as well just execute
+    # them
+    session = db.create_scoped_session()
+    # (these had to be copied)
+    session.execute('CREATE SCHEMA mbdata')
+    session.execute('CREATE TABLE mbdata.search_queue (seq SERIAL PRIMARY KEY, kind TEXT NOT NULL, id INTEGER NOT NULL)')
+    for line in mbdata.search.export_update_triggers(session):
+        session.execute(line)
+    session.rollback()
+
+
+@click.command()
+@with_appcontext
+def reindex_solr():
+    """Reindex the Solr search database"""
+    import pysolr
+    from . import search
+    import mbdata.search
+    solr = pysolr.Solr(db.app.config['SOLR_URI'])
+    session = db.create_scoped_session()
+    mbdata.search.create_index(session, solr, sample=False)
 

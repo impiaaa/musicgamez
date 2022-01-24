@@ -16,6 +16,8 @@ flask-babel = "*"
 Flask-Dance = "*"
 twisted = "*"
 flask-cachecontrol = "*"
+lxml = "*"
+pysolr = "*"
 
 [dev-packages]
 
