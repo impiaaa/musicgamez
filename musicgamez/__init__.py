@@ -30,7 +30,7 @@ from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.twisted import TwistedScheduler
 import click
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, g, render_template, request, url_for, redirect
 from flask.cli import with_appcontext
 from flask_apscheduler import APScheduler
 from flask_babel import _, Babel, Domain, get_locale
@@ -38,6 +38,8 @@ from flask_cachecontrol import FlaskCacheControl
 from flask_dance.consumer import OAuth2ConsumerBlueprint, OAuth2Session
 from flask_dance.consumer.storage import MemoryStorage
 from flask_sqlalchemy import SQLAlchemy
+from google_measurement_protocol import pageview
+from hashlib import md5
 from mbdata.models import ArtistAlias, ArtistAliasType, ArtistCreditName
 from mbdata.models import Recording, RecordingAlias, RecordingAliasType
 from oauthlib.oauth2 import BackendApplicationClient
@@ -45,6 +47,8 @@ import os
 from sqlalchemy import orm, event
 from sqlalchemy.pool import NullPool
 from sqlalchemy.schema import MetaData
+import time
+from uuid import UUID
 from werkzeug.exceptions import HTTPException
 
 
@@ -219,6 +223,32 @@ def create_app(test_config=None):
     app.jinja_env.filters['translate_recording'] = translate_recording
     app.jinja_env.filters['translate_relationship'] = translate_relationship
     app.jinja_env.globals['get_locale'] = get_locale
+    
+    app.events = []
+    
+    @app.before_request
+    def prepare_measurement():
+        g.request_start_time = time.time()
+    
+    @app.after_request
+    def send_measurement(response):
+        locale = get_locale()
+        language = locale.language
+        if locale.variant: language += '-'+locale.variant
+        client_id = str(UUID(bytes=md5((
+            request.headers.get('User-Agent', '') + '\r\n' + \
+            request.headers.get('Accept', '') + '\r\n' + \
+            request.headers.get('Accept-Language', '') + '\r\n' + \
+            request.remote_addr
+        ).encode('utf-8')).digest()[:16]))
+        dnt = request.headers.get('DNT', None) == '1'
+        p = pageview(path=request.path, host_name=request.host, location=request.url,
+            language=language, referrer=request.referrer, cid=client_id,
+            aip='1' if dnt else None, npa=str(int(dnt)), ds='web', uip=request.remote_addr,
+            ua=request.user_agent.string,
+            srt=str(int((time.time()-g.request_start_time)*1000)))
+        app.events.extend(p)
+        return response
     
     app.cli.add_command(init_db_command)
     app.cli.add_command(import_partybus_stream_permission)

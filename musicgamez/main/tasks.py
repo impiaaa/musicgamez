@@ -18,6 +18,7 @@ from tempfile import TemporaryFile, NamedTemporaryFile
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
 from zipfile import ZipFile
+import requests
 
 
 def urlopen_with_ua(u, **kwargs):
@@ -497,3 +498,38 @@ def update_genre_cloud():
         session.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY genre_cloud")
         session.commit()
         session.remove()
+
+TRACKING_URI = 'https://ssl.google-analytics.com/batch'
+
+def report(
+        tracking_id: str, payloads,
+        extra_headers=None,
+        **extra_data):
+    """Actually report measurements to Google Analytics."""
+    data = '\r\n'.join(_finalize_payloads(
+            tracking_id, payloads, **extra_data))
+    return requests.post(
+        TRACKING_URI, data=data, headers=extra_headers, timeout=5.0)
+
+def _finalize_payloads(
+        tracking_id: str, payloads,
+        **extra_data):
+    """Get final data for API requests for Google Analytics.
+    Updates payloads setting required non-specific values on data.
+    """
+    extra_payload = {
+        'v': '1', 'tid': tracking_id, 'aip': '1'}
+
+    for payload in payloads:
+        final_payload = dict(payload)
+        final_payload.update(extra_payload)
+        final_payload.update(extra_data)
+        yield urlencode(final_payload)
+
+@scheduler.task('interval', id='send_reports', seconds=10)
+def send_reports():
+    if 'GOOGLE_ANALYTICS_TRACKING_ID' not in db.app.config: return
+    myevents, db.app.events = db.app.events, []
+    for i in range(0, len(myevents), 20):
+        report(db.app.config['GOOGLE_ANALYTICS_TRACKING_ID'], myevents[i:i+20])
+

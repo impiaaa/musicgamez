@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a6a8c09fffd067d16ddafd6481bd26f5681cf50c4140938a839c55608cf8e507"
+            "sha256": "053dc74be37e0658a2405a9f0a53aac6c1829c6bfec7d04a3f36b2e6cc274167"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -134,6 +134,14 @@
             ],
             "index": "pypi",
             "version": "==2.5.1"
+        },
+        "google-measurement-protocol": {
+            "hashes": [
+                "sha256:387800809d143bf490353e19d78bf856066875fdad80817d9f148219c483f087",
+                "sha256:aba4a80d956a4b47974d26adc578ab48c363f21f61e8097250c6ef560f3b3416"
+            ],
+            "index": "pypi",
+            "version": "==1.1.0"
         },
         "hyperlink": {
             "hashes": [
@@ -324,6 +332,13 @@
                 "sha256:8f0215fcc533dd8dd1bee6f4c412d4f0cd7297307d43ac61666389e3bc3198a3"
             ],
             "version": "==3.1.1"
+        },
+        "prices": {
+            "hashes": [
+                "sha256:2e88703f2f9b676d8360c14997592419602551c432b8dd9beef1a388ae834104",
+                "sha256:4086cf0d895112317da51256901d81a68061434acb240aebf9146fa04fef4554"
+            ],
+            "version": "==1.1.0"
         },
         "psycopg2": {
             "hashes": [
