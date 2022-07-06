@@ -29,7 +29,7 @@ idna==3.3; python_version >= '3.5'
 incremental==21.3.0
 itsdangerous==2.1.2; python_version >= '3.7'
 jinja2==3.1.2; python_version >= '3.7'
-lxml==4.7.1
+lxml==4.9.1
 markupsafe==2.1.1; python_version >= '3.7'
 mbdata==26.0.1
 oauthlib==3.2.0; python_version >= '3.6'
